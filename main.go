@@ -51,8 +51,18 @@ func main() {
 
 	generated.RegisterHandlers(r, server)
 
+	r.GET("/", func(c *gin.Context) {
+		c.File("./dist/assets/html/index.html")
+	})
+	r.GET("/audiopage/console", func(c *gin.Context) {
+		c.File("./dist/assets/html/audiopage/console.html")
+	})
+	r.GET("/audiopage/init", func(c *gin.Context) {
+		c.File("./dist/assets/html/audiopage/init.html")
+	})
+
 	r.NoRoute(func(c *gin.Context) {
-		c.File("./dist/index.html")
+		c.Redirect(302, "/")
 	})
 
 	logger.Info("服务启动", "port", ":8080")

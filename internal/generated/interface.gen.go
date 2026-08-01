@@ -28,6 +28,9 @@ type ServerInterface interface {
 	// SearchAudio 搜索音频
 	// (GET /audio/search)
 	SearchAudio(c *gin.Context, params SearchAudioParams)
+	// GetAudioSource 获取音频流
+	// (GET /audio/source)
+	GetAudioSource(c *gin.Context, params GetAudioSourceParams)
 	// UpdateAudio 更新音频
 	// (POST /audio/update)
 	UpdateAudio(c *gin.Context)
@@ -208,6 +211,33 @@ func (siw *ServerInterfaceWrapper) SearchAudio(c *gin.Context) {
 	siw.Handler.SearchAudio(c, params)
 }
 
+// GetAudioSource operation middleware
+func (siw *ServerInterfaceWrapper) GetAudioSource(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAudioSourceParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAudioSource(c, params)
+}
+
 // UpdateAudio operation middleware
 func (siw *ServerInterfaceWrapper) UpdateAudio(c *gin.Context) {
 
@@ -296,4 +326,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/audio/restore", wrapper.RestoreAudio)
 	router.POST(options.BaseURL+"/audio/update", wrapper.UpdateAudio)
 	router.GET(options.BaseURL+"/audio/recyclebin", wrapper.GetRecycleBin)
+	router.GET(options.BaseURL+"/audio/source", wrapper.GetAudioSource)
 }

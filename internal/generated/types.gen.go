@@ -287,6 +287,11 @@ type SearchAudioParamsSortBy string
 // SearchAudioParamsSortOrder defines parameters for SearchAudio.
 type SearchAudioParamsSortOrder string
 
+// GetAudioSourceParams defines parameters for GetAudioSource.
+type GetAudioSourceParams struct {
+	Id int `form:"id" json:"id"`
+}
+
 // DeleteAudioJSONRequestBody defines body for DeleteAudio for application/json ContentType.
 type DeleteAudioJSONRequestBody = DeleteAudioRequest
 

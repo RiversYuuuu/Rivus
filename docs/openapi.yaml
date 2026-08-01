@@ -219,6 +219,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetRecycleBinResponse'
+  /audio/source:
+    get:
+      x-codegen-skip: true
+      operationId: GetAudioSource
+      summary: 获取音频流
+      description: 获取音频流
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 音频ID
+          required: true
+      responses:
+        '200':
+          description: 音频分片
+          content:
+            audio/mpeg: {}
+            audio/flac: {}
 
 components:
   schemas:

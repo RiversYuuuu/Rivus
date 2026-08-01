@@ -1,0 +1,100 @@
+/* ============================================================
+   播放器 - 底部固定栏
+   ============================================================ */
+#playerBar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: 48px; background: var(--bg1);
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.25);
+  transition: transform .35s cubic-bezier(.2,.8,.3,1);
+  transform: translateY(100%);
+}
+#playerBar.show { transform: translateY(0); }
+#playerBar.loading { pointer-events: none; opacity: .6; }
+#playerBar.collapsed { transform: translateY(100%); }
+
+.pl-info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.pl-title { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-artist { font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.pl-ctrls { display: flex; align-items: center; gap: 4px; flex: none; }
+.pl-btn {
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--ink2); border-radius: 8px;
+  transition: color .2s, background .2s; cursor: pointer;
+}
+.pl-btn:hover { color: var(--amber); background: var(--bg2); }
+.pl-btn.play { background: var(--amber); color: #fff; }
+.pl-btn.play:hover { background: var(--amber2); color: #fff; }
+.pl-btn .ic { width: 18px; height: 18px; }
+
+.pl-prog { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 300px; }
+.pl-time { font-size: 10px; color: var(--ink3); font-family: 'JetBrains Mono', monospace; min-width: 32px; text-align: center; }
+.pl-prog input[type="range"] {
+  -webkit-appearance: none; appearance: none; flex: 1; height: 4px;
+  background: var(--line); border-radius: 2px; outline: none; cursor: pointer;
+}
+.pl-prog input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px;
+  background: var(--amber); border-radius: 50%; cursor: pointer;
+  box-shadow: 0 0 0 0 transparent; transition: box-shadow .2s;
+}
+.pl-prog input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 6px var(--mark);
+}
+
+.pl-toggle {
+  width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--ink3); border-radius: 6px;
+  cursor: pointer; transition: color .2s, background .2s; flex: none;
+}
+.pl-toggle:hover { color: var(--amber); background: var(--bg2); }
+
+/* 音量弹出窗 */
+#plVolIcon { position: relative; }
+.pl-vol-popup {
+  position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%);
+  margin-bottom: 6px; background: var(--bg1); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 6px; display: flex; flex-direction: column;
+  align-items: center; gap: 6px; box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  opacity: 0; visibility: hidden; transition: opacity .18s, visibility .18s;
+  z-index: 101;
+}
+.pl-vol-popup.show { opacity: 1; visibility: visible; }
+.pl-vol-popup .vol-val {
+  font-size: 10px; color: var(--ink3); font-family: 'JetBrains Mono', monospace;
+  min-width: 24px; text-align: center;
+}
+.pl-vol-popup input[type="range"] {
+  writing-mode: vertical-lr; direction: rtl;
+  -webkit-appearance: none; appearance: none;
+  width: 4px; height: 100px; background: var(--line);
+  border-radius: 2px; outline: none; cursor: pointer;
+}
+.pl-vol-popup input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  background: var(--amber); border-radius: 50%; cursor: pointer;
+  box-shadow: 0 0 0 0 transparent; transition: box-shadow .2s;
+}
+.pl-vol-popup input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 6px var(--mark);
+}
+
+/* 展开小标签 - 收起时露出 */
+.pl-tab {
+  position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 24px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg1); border: 1px solid var(--line); border-bottom: none;
+  border-radius: 8px 8px 0 0; color: var(--ink3); cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.pl-tab:hover { color: var(--amber); background: var(--bg2); }
+.pl-tab .ic { width: 16px; height: 16px; }
+#playerBar.collapsed .pl-tab {
+  opacity: 1; pointer-events: auto;
+}
+
+.song-row.playing { background: var(--mark) !important; }
+.song-row.playing .tt { color: var(--amber); }
