@@ -1,0 +1,431 @@
+openapi: 3.0.3
+info:
+  title: MultiMediaManager API
+  description: 多媒体管理系统的后端 API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: 本地开发环境
+paths:
+  /ping:
+    get:
+      operationId: Ping
+      summary: 健康检查接口
+      description: 用于测试服务是否正常运行
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+  /config:
+    get:
+      operationId: GetConfig
+      summary: 获取配置接口
+      description: 用于获取服务配置
+      responses:
+        '200':
+          description: 配置成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConfigResponse'
+    post:
+      operationId: SetConfig
+      summary: 配置接口
+      description: 用于配置服务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetConfigRequest'
+      responses:
+        '200':
+          description: 配置成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetConfigResponse'
+  /audio/scan:
+    get:
+      operationId: ScanAudio
+      summary: 扫描音频目录，构建音频元数据
+      description: 根据文件存储目录初始化服务数据
+      responses:
+        '200':
+          description: 扫描成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanAudioResponse'
+  /audio/search:
+    get:
+      operationId: SearchAudio
+      summary: 搜索音频
+      description: 根据音频元数据搜索音频
+      parameters:
+        # 分页参数
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 页码，默认第一页
+          required: false
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+            description: 每页数量，默认10条
+          required: false
+        # 排序参数
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [title, artist]
+            default: title
+            description: 排序字段，默认按标题排序
+          required: false
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+            description: 排序顺序，默认升序
+          required: false
+        # 搜索参数
+        - name: title
+          in: query
+          schema:
+            type: string
+            default: ''
+            description: 搜索查询，默认空字符串
+          required: false
+        - name: artist
+          in: query
+          schema:
+            type: string
+            default: ''
+            description: 搜索查询，默认空字符串
+          required: false
+      responses:
+        '200':
+          description: 搜索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchAudioResponse'
+  /audio/delete:
+    delete:
+      operationId: DeleteAudio
+      summary: 删除音频
+      description: 根据音频ID删除音频
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAudioRequest'
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAudioResponse'
+  /audio/restore:
+    post:
+      operationId: RestoreAudio
+      summary: 恢复音频
+      description: 根据音频ID恢复音频
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreAudioRequest'
+      responses:
+        '200':
+          description: 恢复成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreAudioResponse'
+  /audio/update:
+    post:
+      operationId: UpdateAudio
+      summary: 更新音频
+      description: 根据音频ID更新音频元数据
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAudioRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAudioResponse'
+  /audio/recyclebin:
+    get:
+      operationId: GetRecycleBin
+      summary: 获取回收站音频
+      description: 获取所有已删除的音频
+      parameters:
+        # 分页参数
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 页码，默认第一页
+          required: false
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+            description: 每页数量，默认10条
+          required: false
+        # 排序参数
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [title, artist]
+            default: title
+            description: 排序字段，默认按标题排序
+          required: false
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+            description: 排序顺序，默认升序
+          required: false
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRecycleBinResponse'
+
+components:
+  schemas:
+    PingResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    Config:
+      type: object
+      properties:
+        audio_dir:
+          type: string
+          example: /c/users/default/Music
+          description: 音频目录
+    SetConfigRequest:
+      type: object
+      $ref: '#/components/schemas/Config'
+    SetConfigResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    GetConfigResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          $ref: '#/components/schemas/Config'
+    ScanAudioResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    AudioItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID
+        create_time:
+          type: string
+          description: 创建时间
+        update_time:
+          type: string
+          description: 更新时间
+        delete_time:
+          type: string
+          description: 删除时间
+        file_path:
+          type: string
+          description: 音频文件路径
+        file_ext:
+          type: string
+          description: 音频文件扩展名
+        file_size:
+          type: integer
+          description: 音频文件大小，单位字节
+        file_md5:
+          type: string
+          description: 音频文件MD5值
+        title:
+          type: string
+          description: 标题
+        artist:
+          type: string
+          description: 艺术家
+        album:
+          type: string
+          description: 专辑
+        cover_path:
+          type: string
+          description: 封面路径
+        lyric_path:
+          type: string
+          description: 歌词路径
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+          description: 总记录数
+        total_pages:
+          type: integer
+          description: 总页数
+    SearchAudioResponse:
+      type: object
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            audio_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/AudioItem'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    DeleteAudioRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: 音频ID列表
+    DeleteAudioResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    RestoreAudioRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: 音频ID列表
+    RestoreAudioResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    UpdateAudioRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 音频ID
+        title:
+          type: string
+          description: 标题
+        artist:
+          type: string
+          description: 艺术家
+        album:
+          type: string
+          description: 专辑
+    UpdateAudioResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    GetRecycleBinResponse:
+      type: object
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            audio_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/AudioItem'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
