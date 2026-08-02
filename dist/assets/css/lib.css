@@ -99,6 +99,14 @@ img.cover-err{visibility:hidden}
 .a-download:hover{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)}
 .a-del:hover,.a-purge:hover{background:color-mix(in srgb,var(--rose) 14%,transparent);color:var(--rose)}
 .a-restore:hover{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal)}
+.act-dropdown{position:relative;display:inline-block;vertical-align:middle}
+.song-row.dropdown-active{position:relative;z-index:50}
+.dropdown-menu{position:absolute;top:100%;right:0;z-index:50;min-width:140px;background:var(--bg1);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.15);padding:4px 0;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .15s,transform .15s,visibility .15s}
+.dropdown-menu.open{opacity:1;visibility:visible;transform:translateY(0)}
+.dropdown-item{display:flex;align-items:center;gap:8px;width:100%;border:none;background:none;color:var(--ink2);font-size:13px;padding:8px 14px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+.dropdown-item .ic{width:16px;height:16px;flex:none}
+.dropdown-item:hover{background:var(--bg2);color:var(--amber)}
+.dropdown-item.disabled{opacity:.4;pointer-events:none}
 #btnUpload{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 50%,transparent)}
 #btnUpload:hover{background:color-mix(in srgb,var(--blue) 12%,transparent);border-color:var(--blue)}
 @media (hover:none){.act-btn{opacity:1}}

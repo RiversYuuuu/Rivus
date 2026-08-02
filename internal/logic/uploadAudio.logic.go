@@ -2,9 +2,7 @@ package logic
 
 import (
 	"fmt"
-	"io"
 	"mime/multipart"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -84,7 +82,7 @@ func (l *UploadAudioLogic) buildFileInfo(audio *model.Audio, fileHeader *multipa
 	}
 
 	// 保存音频文件到指定目录
-	if err := l.SaveFile(fileHeader, audio.FilePath); err != nil {
+	if err := tool.SaveFile(fileHeader, audio.FilePath); err != nil {
 		l.Logger.Warn("Failed to save audio file", "error", err, "path", audio.Title)
 		return
 	}
@@ -94,23 +92,6 @@ func (l *UploadAudioLogic) buildFileInfo(audio *model.Audio, fileHeader *multipa
 		return
 	}
 	audio.MD5 = hash
-}
-
-func (l *UploadAudioLogic) SaveFile(fileHeader *multipart.FileHeader, filePath string) error {
-	src, err := fileHeader.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
-	return err
 }
 
 func (l *UploadAudioLogic) buildTagInfo(audio *model.Audio) {

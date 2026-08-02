@@ -263,6 +263,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadResponse'
+  /audio/lyric/upload:
+    post:
+      x-codegen-skip: true
+      operationId: UploadLyric
+      summary: 上传歌词文件
+      description: 上传歌词文件到服务器
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadLyricsRequest'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 歌词文件
+      responses:
+        '200':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+  /audio/lyric/source:
+    get:
+      x-codegen-skip: true
+      operationId: GetLyricSource
+      summary: 获取歌词
+      description: 获取音频的歌词
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 音频ID
+          required: true
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            text/plain: {}
 
 components:
   schemas:
@@ -477,6 +523,12 @@ components:
                 $ref: '#/components/schemas/AudioItem'
             pagination:
               $ref: '#/components/schemas/Pagination'
+    UploadLyricsRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 音频ID
     UploadResponse:
       type: object
       required: [code, message]

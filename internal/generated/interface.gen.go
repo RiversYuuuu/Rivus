@@ -16,6 +16,12 @@ type ServerInterface interface {
 	// DeleteAudio 删除音频
 	// (DELETE /audio/delete)
 	DeleteAudio(c *gin.Context)
+	// GetLyricSource 获取歌词
+	// (GET /audio/lyric/source)
+	GetLyricSource(c *gin.Context, params GetLyricSourceParams)
+	// UploadLyric 上传歌词文件
+	// (POST /audio/lyric/upload)
+	UploadLyric(c *gin.Context)
 	// GetRecycleBin 获取回收站音频
 	// (GET /audio/recyclebin)
 	GetRecycleBin(c *gin.Context, params GetRecycleBinParams)
@@ -68,6 +74,46 @@ func (siw *ServerInterfaceWrapper) DeleteAudio(c *gin.Context) {
 	}
 
 	siw.Handler.DeleteAudio(c)
+}
+
+// GetLyricSource operation middleware
+func (siw *ServerInterfaceWrapper) GetLyricSource(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLyricSourceParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetLyricSource(c, params)
+}
+
+// UploadLyric operation middleware
+func (siw *ServerInterfaceWrapper) UploadLyric(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UploadLyric(c)
 }
 
 // GetRecycleBin operation middleware
@@ -344,4 +390,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/audio/recyclebin", wrapper.GetRecycleBin)
 	router.GET(options.BaseURL+"/audio/source", wrapper.GetAudioSource)
 	router.POST(options.BaseURL+"/audio/upload", wrapper.UploadAudio)
+	router.POST(options.BaseURL+"/audio/lyric/upload", wrapper.UploadLyric)
+	router.GET(options.BaseURL+"/audio/lyric/source", wrapper.GetLyricSource)
 }

@@ -94,8 +94,20 @@ function renderTable(list, pag, isBin = false) {
           <button class="act-btn a-restore" data-action="restore" data-id="${id}" title="恢复"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-7.7L3 8"/><path d="M3 3v5h5"/></svg></button>
           <button class="act-btn a-purge" data-action="purge" data-id="${id}" title="彻底删除"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button>
         ` : `
-          <button class="act-btn a-download" data-action="download" data-id="${id}" data-title="${esc(title)}" data-ext="${a.file_ext || ''}" title="下载"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-          <button class="act-btn a-edit" data-action="edit" data-id="${id}" title="编辑"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+          <div class="act-dropdown">
+            <button class="act-btn a-download" data-id="${id}" title="下载"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" data-action="download-audio" data-id="${id}" data-title="${esc(title)}" data-ext="${a.file_ext || ''}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载音频</button>
+              <button class="dropdown-item${a.lyric_path ? '' : ' disabled'}" data-action="download-lyric" data-id="${id}" data-title="${esc(title)}"${a.lyric_path ? '' : ' disabled'}><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>下载歌词</button>
+            </div>
+          </div>
+          <div class="act-dropdown">
+            <button class="act-btn a-edit" data-id="${id}" title="编辑"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" data-action="upload-lyric" data-id="${id}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>上传歌词</button>
+              <button class="dropdown-item" data-action="edit" data-id="${id}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>编辑元信息</button>
+            </div>
+          </div>
           <button class="act-btn a-del" data-action="delete" data-id="${id}" title="删除"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M16 6v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
         `}
       </td>
@@ -111,7 +123,36 @@ function renderTable(list, pag, isBin = false) {
       else if (action === 'delete') confirmAction('delete', id);
       else if (action === 'restore') confirmAction('restore', id);
       else if (action === 'purge') confirmAction('purge', id);
-      else if (action === 'download') downloadSong(id, btn.dataset.title, btn.dataset.ext);
+      else if (action === 'download-audio') downloadSong(id, btn.dataset.title, btn.dataset.ext);
+      else if (action === 'download-lyric') downloadLyric(id, btn.dataset.title);
+      else if (action === 'upload-lyric') uploadLyric(id);
+    });
+  });
+
+  tbody.querySelectorAll('.act-dropdown').forEach((dd) => {
+    const menu = dd.querySelector('.dropdown-menu');
+    const row = dd.closest('.song-row');
+    dd.addEventListener('mouseenter', () => {
+      document.querySelectorAll('.dropdown-menu.open').forEach((m) => { if (m !== menu) { m.classList.remove('open'); m.closest('.song-row')?.classList.remove('dropdown-active'); } });
+      menu.classList.add('open');
+      row?.classList.add('dropdown-active');
+    });
+    dd.addEventListener('mouseleave', () => {
+      menu.classList.remove('open');
+      row?.classList.remove('dropdown-active');
+    });
+  });
+
+  tbody.querySelectorAll('.dropdown-item').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      const id = parseInt(btn.dataset.id);
+      document.querySelectorAll('.dropdown-menu.open').forEach((m) => { m.classList.remove('open'); m.closest('.song-row')?.classList.remove('dropdown-active'); });
+      if (action === 'edit') openEdit(id);
+      else if (action === 'download-audio') downloadSong(id, btn.dataset.title, btn.dataset.ext);
+      else if (action === 'download-lyric') downloadLyric(id, btn.dataset.title);
+      else if (action === 'upload-lyric') uploadLyric(id);
     });
   });
 
@@ -341,6 +382,42 @@ function downloadSong(id, title, ext) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+function downloadLyric(id, title) {
+  const filename = title ? `${title}.lrc` : `lyric_${id}.lrc`;
+  const a = document.createElement('a');
+  a.href = `/audio/lyric/source?id=${id}`;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function uploadLyric(id) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.lrc';
+  input.style.display = 'none';
+  input.addEventListener('change', async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      const fd = new FormData();
+      fd.append('id', id);
+      fd.append('file', file);
+      const res = await fetch('/audio/lyric/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.code === 0) showToast('歌词上传成功');
+      else showToast(data.message || '歌词上传失败', 'warn');
+    } catch (e) {
+      showToast('歌词上传失败: ' + e.message, 'err');
+    }
+    document.body.removeChild(input);
+  });
+  document.body.appendChild(input);
+  input.click();
 }
 
 /* ---------- keyboard shortcuts ---------- */

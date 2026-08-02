@@ -154,6 +154,7 @@ async function fetchAllSongs() {
       id: a.id,
       title: a.title || '未知歌曲',
       artist: a.artist || '未知歌手',
+      lyric_path: a.lyric_path || '',
     }));
   } catch (e) {
     return [];

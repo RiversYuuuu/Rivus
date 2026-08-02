@@ -264,6 +264,12 @@ type UpdateAudioResponse struct {
 	Message string `json:"message"`
 }
 
+// UploadLyricsRequest defines model for UploadLyricsRequest.
+type UploadLyricsRequest struct {
+	// Id 音频ID
+	Id *int `json:"id,omitempty"`
+}
+
 // UploadResponse defines model for UploadResponse.
 type UploadResponse struct {
 	// Code Example: 0
@@ -271,6 +277,17 @@ type UploadResponse struct {
 
 	// Message Example: success
 	Message string `json:"message"`
+}
+
+// GetLyricSourceParams defines parameters for GetLyricSource.
+type GetLyricSourceParams struct {
+	Id int `form:"id" json:"id"`
+}
+
+// UploadLyricMultipartBody defines parameters for UploadLyric.
+type UploadLyricMultipartBody struct {
+	// File 歌词文件
+	File *openapi_types.File `json:"file,omitempty"`
 }
 
 // GetRecycleBinParams defines parameters for GetRecycleBin.
@@ -316,6 +333,12 @@ type UploadAudioMultipartBody struct {
 
 // DeleteAudioJSONRequestBody defines body for DeleteAudio for application/json ContentType.
 type DeleteAudioJSONRequestBody = DeleteAudioRequest
+
+// UploadLyricJSONRequestBody defines body for UploadLyric for application/json ContentType.
+type UploadLyricJSONRequestBody = UploadLyricsRequest
+
+// UploadLyricMultipartRequestBody defines body for UploadLyric for multipart/form-data ContentType.
+type UploadLyricMultipartRequestBody UploadLyricMultipartBody
 
 // RestoreAudioJSONRequestBody defines body for RestoreAudio for application/json ContentType.
 type RestoreAudioJSONRequestBody = RestoreAudioRequest

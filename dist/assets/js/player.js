@@ -14,6 +14,8 @@ const Player = {
     loading: false,
     volume: 0.7,
     muted: false,
+    lyrics: [],
+    lyricIndex: -1,
   },
 
   init() {
@@ -33,6 +35,10 @@ const Player = {
       duration: $('#plDuration'),
       audio: $('#plAudio'),
       volIcon: $('#plVolIcon'),
+      lyricCur: $('#lyricCur'),
+      lyricNext: $('#lyricNext'),
+      lyricNext2: $('#lyricNext2'),
+      lyricScroll: $('#lyricScroll'),
     };
 
     this.el.playBtn.addEventListener('click', () => this.toggle());
@@ -81,10 +87,12 @@ const Player = {
       audio.play();
       this.state.playing = true;
       this._setPlayIcon(true);
+      this._scheduleNextScroll();
     } else {
       audio.pause();
       this.state.playing = false;
       this._setPlayIcon(false);
+      if (this._scrollTimer) { clearTimeout(this._scrollTimer); this._scrollTimer = null; }
     }
   },
 
@@ -192,6 +200,7 @@ const Player = {
     const pct = (audio.currentTime / audio.duration) * 100;
     this.el.progress.value = pct;
     this.el.currentTime.textContent = this._fmtTime(audio.currentTime);
+    this._syncLyric(audio.currentTime);
   },
 
   onLoaded() {
@@ -230,6 +239,9 @@ const Player = {
     this.el.currentTime.textContent = '0:00';
     this.el.duration.textContent = '0:00';
     this.el.progress.value = 0;
+    this.state.lyrics = [];
+    this.state.lyricIndex = -1;
+    this._renderLyric(true);
     this.state.loading = true;
     this.el.bar.classList.add('loading');
 
@@ -245,6 +257,7 @@ const Player = {
       await this.el.audio.play();
       this._setPlayIcon(true);
       this._highlightRow(index);
+      this._loadLyric(song);
     } catch (e) {
       showToast('加载失败: ' + e.message, 'err');
     }
@@ -335,5 +348,151 @@ const Player = {
     }
     this.el.volIcon.title = muted ? '取消静音' : '静音';
     if (this.el.volPopup) this.el.volPopup.classList.add('show');
+  },
+
+  async _loadLyric(song) {
+    if (!song.lyric_path) return;
+    try {
+      const resp = await fetch('/audio/lyric/source?id=' + song.id);
+      if (!resp.ok) return;
+      const text = await resp.text();
+      this.state.lyrics = this._parseLRC(text);
+      this.state.lyricIndex = -1;
+      this._renderLyric();
+    } catch (e) {}
+  },
+
+  _parseLRC(lrc) {
+    const lines = [];
+    for (const raw of lrc.split('\n')) {
+      const match = raw.match(/\[(\d{1,2}):(\d{2})\.(\d{2,3})](.*)/);
+      if (!match) continue;
+      const time = +match[1] * 60 + +match[2] + +match[3] / (match[3].length === 3 ? 1000 : 100);
+      const text = match[4].trim();
+      if (text) lines.push({ time, text });
+    }
+    return lines.sort((a, b) => a.time - b.time);
+  },
+
+  _syncLyric(currentTime) {
+    const lines = this.state.lyrics;
+    if (lines.length === 0) return;
+    let idx = -1;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (currentTime >= lines[i].time) { idx = i; break; }
+    }
+    if (idx === this.state.lyricIndex) return;
+    if (this._scrollTargetIdx >= 0 && idx === this._scrollTargetIdx) return;
+    this.state.lyricIndex = idx;
+    this._renderLyric();
+  },
+
+  _renderLyric(instant) {
+    const scroll = this.el.lyricScroll;
+    const lines = this.state.lyrics;
+    const idx = this.state.lyricIndex;
+
+    if (this._scrollTimer) { clearTimeout(this._scrollTimer); this._scrollTimer = null; }
+    this._scrollAnimId = (this._scrollAnimId || 0) + 1;
+    this._scrollTargetIdx = -1;
+
+    if (this._scrollClone) {
+      this._scrollClone.remove();
+      this._scrollClone = null;
+    }
+    scroll.classList.remove('smooth');
+    scroll.style.transform = '';
+    scroll.style.transitionDuration = '';
+    scroll.style.removeProperty('--lyric-dur');
+
+    const cur = idx >= 0 && idx < lines.length ? lines[idx].text : (lines.length > 0 ? lines[0].text : '');
+    const nxt = idx >= 0 && idx + 1 < lines.length ? lines[idx + 1].text : (idx < 0 && lines.length > 1 ? lines[1].text : '');
+    const nxt2 = idx >= 0 && idx + 2 < lines.length ? lines[idx + 2].text : (idx < 0 && lines.length > 2 ? lines[2].text : '');
+    this.el.lyricCur.textContent = cur;
+    this.el.lyricNext.textContent = nxt;
+    this.el.lyricNext2.textContent = nxt2;
+
+    if (!instant) this._scheduleNextScroll();
+  },
+
+  _scheduleNextScroll() {
+    if (this._scrollTimer) { clearTimeout(this._scrollTimer); this._scrollTimer = null; }
+    const lines = this.state.lyrics;
+    const idx = this.state.lyricIndex;
+    if (idx < 0 || idx >= lines.length - 1) return;
+    const audio = this.el.audio;
+    if (!audio.duration || audio.paused) return;
+    const nextTime = lines[idx + 1].time;
+    const timeUntilNext = nextTime - audio.currentTime;
+    if (timeUntilNext <= 0) return;
+    const animDuration = Math.min(0.8, timeUntilNext * 0.8);
+    const startDelay = Math.max(0, (timeUntilNext - animDuration) * 1000);
+    this._scrollTargetIdx = idx + 1;
+    this._scrollTimer = setTimeout(() => {
+      if (audio.paused) return;
+      this._startScrollAnimation(animDuration);
+    }, startDelay);
+  },
+
+  _startScrollAnimation(duration) {
+    const scroll = this.el.lyricScroll;
+    const animId = this._scrollAnimId;
+    const targetIdx = this._scrollTargetIdx;
+    const lines = this.state.lyrics;
+
+    const cur = lines[targetIdx].text;
+    const nxt = targetIdx + 1 < lines.length ? lines[targetIdx + 1].text : '';
+    const nxt2 = targetIdx + 2 < lines.length ? lines[targetIdx + 2].text : '';
+
+    const clone = scroll.cloneNode(true);
+    clone.id = '';
+    clone.querySelectorAll('[id]').forEach(function(el) { el.id = ''; });
+    clone.style.position = 'absolute';
+    clone.style.top = '0';
+    clone.style.left = '0';
+    clone.style.width = '100%';
+    clone.style.zIndex = '1';
+    clone.style.pointerEvents = 'none';
+    scroll.style.position = 'relative';
+    scroll.appendChild(clone);
+
+    this.el.lyricCur.style.visibility = 'hidden';
+    this.el.lyricNext.style.visibility = 'hidden';
+    this.el.lyricNext2.style.visibility = 'hidden';
+    this.el.lyricCur.textContent = cur;
+    this.el.lyricNext.textContent = nxt;
+    this.el.lyricNext2.textContent = nxt2;
+
+    const curEl = clone.querySelector('.lyric-cur');
+    const nextEl = clone.querySelector('.lyric-next');
+    if (!curEl || !nextEl) return;
+    const curRect = curEl.getBoundingClientRect();
+    const nextRect = nextEl.getBoundingClientRect();
+    const gap = 0.9;
+    const lineH = curRect.height + gap;
+
+    clone.style.setProperty('--lyric-dur', duration + 's');
+    clone.style.transitionDuration = duration + 's';
+    clone.classList.add('smooth');
+    clone.offsetHeight;
+    clone.style.transform = 'translateY(' + (-lineH) + 'px)';
+
+    this._scrollClone = clone;
+
+    var self = this;
+    var onEnd = function(e) {
+      if (e.target !== clone || e.propertyName !== 'transform') return;
+      clone.removeEventListener('transitionend', onEnd);
+      if (self._scrollAnimId !== animId) return;
+      clone.remove();
+      self._scrollClone = null;
+      self.state.lyricIndex = targetIdx;
+      self._scrollTargetIdx = -1;
+      self.el.lyricCur.style.visibility = '';
+      self.el.lyricNext.style.visibility = '';
+      self.el.lyricNext2.style.visibility = '';
+      self._renderLyric();
+    };
+    clone.addEventListener('transitionend', onEnd);
   },
 };
