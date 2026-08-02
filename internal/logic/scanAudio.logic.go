@@ -1,9 +1,6 @@
 package logic
 
 import (
-	"crypto/md5"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -11,6 +8,7 @@ import (
 
 	generated "MultiMediaManager/internal/generated"
 	"MultiMediaManager/internal/model"
+	"MultiMediaManager/internal/tool"
 )
 
 // ScanAudioLogic 扫描音频目录，构建音频元数据
@@ -92,7 +90,7 @@ func (l *ScanAudioLogic) buildFileInfo(audio *model.Audio, filePath string) {
 	}
 	audio.FileSize = info.Size()
 
-	hash, err := l.computeMD5(filePath)
+	hash, err := tool.ComputeMD5(filePath)
 	if err != nil {
 		l.Logger.Warn("Failed to compute MD5 hash", "error", err, "path", filePath)
 		return
@@ -148,20 +146,4 @@ func (l *ScanAudioLogic) scanAudioFiles(dir string) ([]string, error) {
 	})
 
 	return files, err
-}
-
-// computeMD5 计算文件MD5
-func (l *ScanAudioLogic) computeMD5(filePath string) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

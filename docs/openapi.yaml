@@ -239,6 +239,30 @@ paths:
           content:
             audio/mpeg: {}
             audio/flac: {}
+  /audio/upload:
+    post:
+      x-codegen-skip: true
+      operationId: UploadAudio
+      summary: 上传音频文件
+      description: 上传音频文件到服务器
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 音频文件
+      responses:
+        '200':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
 
 components:
   schemas:
@@ -377,6 +401,10 @@ components:
           items:
             type: integer
           description: 音频ID列表
+        hard:
+          type: boolean
+          description: 是否硬删除，默认false
+          default: false
     DeleteAudioResponse:
       type: object
       required: [code, message]
@@ -449,3 +477,13 @@ components:
                 $ref: '#/components/schemas/AudioItem'
             pagination:
               $ref: '#/components/schemas/Pagination'
+    UploadResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success

@@ -119,12 +119,24 @@ func (r *Repository) GetAudioByID(audioID uint) (*model.Audio, error) {
 	return &audio, nil
 }
 
+func (r *Repository) GetAudioByIDFromRecycleBin(audioID uint) (*model.Audio, error) {
+	var audio model.Audio
+	if err := r.DB.Unscoped().Where("ID = ? AND deleted_at IS NOT NULL", audioID).First(&audio).Error; err != nil {
+		return nil, err
+	}
+	return &audio, nil
+}
+
 func (r *Repository) UpdateAudio(audio *model.Audio) error {
 	return r.DB.Save(audio).Error
 }
 
-func (r *Repository) DeleteAudioByID(audioID uint) error {
+func (r *Repository) SoftDeleteAudioByID(audioID uint) error {
 	return r.DB.Delete(&model.Audio{}, audioID).Error
+}
+
+func (r *Repository) HardDeleteAudioByID(audioID uint) error {
+	return r.DB.Unscoped().Delete(&model.Audio{}, audioID).Error
 }
 
 func (r *Repository) RestoreAudioByID(audioID uint) error {

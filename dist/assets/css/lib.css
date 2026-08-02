@@ -33,7 +33,7 @@
 
 /* ---------- table ---------- */
 .table-card{background:var(--bg1);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
-.table-scroll{overflow-x:auto}
+.table-scroll{overflow:hidden}
 table{width:100%;border-collapse:collapse;min-width:820px}
 thead th{font-size:11.5px;font-weight:500;letter-spacing:.14em;color:var(--ink3);text-align:left;padding:12px 14px;background:var(--bg2);border-bottom:1px solid var(--line);user-select:none;white-space:nowrap}
 th.sortable{cursor:pointer;transition:color .2s}
@@ -91,13 +91,16 @@ img.cover-err{visibility:hidden}
 .f-ogg{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 45%,transparent);background:color-mix(in srgb,var(--blue) 10%,transparent)}
 .f-wav{color:var(--ink2);border-color:var(--line2);background:var(--bg2)}
 .f-m4a{color:var(--green);border-color:color-mix(in srgb,var(--green) 45%,transparent);background:color-mix(in srgb,var(--green) 10%,transparent)}
-.c-act{white-space:nowrap;text-align:right;width:84px}
+.c-act{white-space:nowrap;text-align:center;width:84px}
 .act-btn{width:31px;height:31px;display:inline-flex;align-items:center;justify-content:center;border:none;background:none;color:var(--ink3);border-radius:8px;opacity:.35;transition:.18s;vertical-align:middle}
 .song-row:hover .act-btn{opacity:1}
 .act-btn:hover{transform:translateY(-2px)}
 .a-edit:hover{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber)}
+.a-download:hover{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue)}
 .a-del:hover,.a-purge:hover{background:color-mix(in srgb,var(--rose) 14%,transparent);color:var(--rose)}
 .a-restore:hover{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal)}
+#btnUpload{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 50%,transparent)}
+#btnUpload:hover{background:color-mix(in srgb,var(--blue) 12%,transparent);border-color:var(--blue)}
 @media (hover:none){.act-btn{opacity:1}}
 .empty{padding:70px 20px;text-align:center;color:var(--ink3)}
 .empty svg{width:74px;height:74px;margin-bottom:18px;opacity:.75}

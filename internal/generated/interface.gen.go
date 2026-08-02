@@ -34,6 +34,9 @@ type ServerInterface interface {
 	// UpdateAudio 更新音频
 	// (POST /audio/update)
 	UpdateAudio(c *gin.Context)
+	// UploadAudio 上传音频文件
+	// (POST /audio/upload)
+	UploadAudio(c *gin.Context)
 	// GetConfig 获取配置接口
 	// (GET /config)
 	GetConfig(c *gin.Context)
@@ -251,6 +254,19 @@ func (siw *ServerInterfaceWrapper) UpdateAudio(c *gin.Context) {
 	siw.Handler.UpdateAudio(c)
 }
 
+// UploadAudio operation middleware
+func (siw *ServerInterfaceWrapper) UploadAudio(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UploadAudio(c)
+}
+
 // GetConfig operation middleware
 func (siw *ServerInterfaceWrapper) GetConfig(c *gin.Context) {
 
@@ -327,4 +343,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/audio/update", wrapper.UpdateAudio)
 	router.GET(options.BaseURL+"/audio/recyclebin", wrapper.GetRecycleBin)
 	router.GET(options.BaseURL+"/audio/source", wrapper.GetAudioSource)
+	router.POST(options.BaseURL+"/audio/upload", wrapper.UploadAudio)
 }

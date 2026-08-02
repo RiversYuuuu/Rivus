@@ -92,8 +92,9 @@ function renderTable(list, pag, isBin = false) {
       <td class="c-act">
         ${isBin ? `
           <button class="act-btn a-restore" data-action="restore" data-id="${id}" title="恢复"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-7.7L3 8"/><path d="M3 3v5h5"/></svg></button>
-          <button class="act-btn a-purge" data-action="purge" data-id="${id}" title="永久删除"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button>
+          <button class="act-btn a-purge" data-action="purge" data-id="${id}" title="彻底删除"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg></button>
         ` : `
+          <button class="act-btn a-download" data-action="download" data-id="${id}" data-title="${esc(title)}" data-ext="${a.file_ext || ''}" title="下载"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
           <button class="act-btn a-edit" data-action="edit" data-id="${id}" title="编辑"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
           <button class="act-btn a-del" data-action="delete" data-id="${id}" title="删除"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M16 6v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
         `}
@@ -110,6 +111,7 @@ function renderTable(list, pag, isBin = false) {
       else if (action === 'delete') confirmAction('delete', id);
       else if (action === 'restore') confirmAction('restore', id);
       else if (action === 'purge') confirmAction('purge', id);
+      else if (action === 'download') downloadSong(id, btn.dataset.title, btn.dataset.ext);
     });
   });
 
@@ -265,8 +267,8 @@ function closeEdit() {
 let confirmCb = null;
 
 function confirmAction(action, id) {
-  const titles = { delete: '删除歌曲', restore: '恢复歌曲', purge: '永久删除' };
-  const msgs = { delete: '确定要将此歌曲移至回收站吗？', restore: '确定要恢复此歌曲吗？', purge: '此操作不可撤销，确定要永久删除吗？' };
+  const titles = { delete: '删除歌曲', restore: '恢复歌曲', purge: '彻底删除' };
+  const msgs = { delete: '确定要将此歌曲移至回收站吗？', restore: '确定要恢复此歌曲吗？', purge: '此操作不可撤销，确定要彻底删除吗？' };
   $('#cTitle').textContent = titles[action] || '确认操作';
   $('#cMsg').textContent = msgs[action] || '';
 
@@ -281,8 +283,8 @@ function confirmAction(action, id) {
         if (res.code === 0) { showToast('已恢复'); loadLibrary(); }
         else showToast(res.message || '恢复失败', 'warn');
       } else if (action === 'purge') {
-        const res = await apiDelete('/audio/delete', { ids: [id] });
-        if (res.code === 0) { showToast('已永久删除'); loadLibrary(); }
+        const res = await apiDelete('/audio/delete', { ids: [id], hard: true });
+        if (res.code === 0) { showToast('已彻底删除'); loadLibrary(); }
         else showToast(res.message || '删除失败', 'warn');
       }
     } catch (e) {
@@ -328,6 +330,17 @@ function collectCurrentSongs() {
     songs.push({ id, title, artist });
   });
   return songs;
+}
+
+function downloadSong(id, title, ext) {
+  const filename = title ? `${title}.${ext || 'mp3'}` : `song_${id}.${ext || 'mp3'}`;
+  const a = document.createElement('a');
+  a.href = `/audio/source?id=${id}`;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 /* ---------- keyboard shortcuts ---------- */
@@ -379,6 +392,40 @@ function bindEvents() {
 
   $('#btnRescan').addEventListener('click', () => {
     leavePage('/audiopage/init');
+  });
+
+  $('#btnUpload').addEventListener('click', () => {
+    $('#fileUpload').click();
+  });
+
+  $('#fileUpload').addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    let success = 0;
+    let skip = 0;
+    let fail = 0;
+
+    for (const file of files) {
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/audio/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.code === 0 && data.message === 'success') success++;
+        else if (data.code === 1) skip++;
+        else fail++;
+      } catch (err) {
+        fail++;
+      }
+    }
+
+    if (success > 0) showToast(`成功上传 ${success} 首歌曲`);
+    if (skip > 0) showToast(`${skip} 首歌曲已存在，已跳过`, 'warn');
+    if (fail > 0) showToast(`${fail} 首歌曲上传失败`, 'err');
+
+    e.target.value = '';
+    if (success > 0) loadLibrary();
   });
 
   $('#btnEditCancel').addEventListener('click', closeEdit);

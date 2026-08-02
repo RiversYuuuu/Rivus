@@ -87,7 +87,7 @@ audiopage/init.html
 - `renderTable()`：渲染歌曲表格，每行绑定播放、编辑、删除按钮
 - `updatePager()`：渲染分页栏（含定位按钮、页码、跳转）
 - `openEdit(id)` / `closeEdit()`：编辑弹窗
-- `confirmAction(action, id)`：确认弹窗（删除/恢复/永久删除）
+- `confirmAction(action, id)`：确认弹窗（删除/恢复/彻底删除）
 - `navigateToSong(songId)`：定位到指定歌曲所在页
 - **离开拦截**：正在播放时点击"返回主页"或"重新扫描"弹出确认弹窗（确认/取消按钮居中，确认按钮琥珀色高亮），`beforeunload` 拦截浏览器级离开
 - 键盘快捷键：`Esc` 关闭弹窗，`/` 聚焦搜索框
@@ -171,7 +171,7 @@ audiopage/init.html
 | `/audio/search` | GET | 搜索/分页查询歌曲 | 首页、管理页 |
 | `/audio/scan` | GET | 触发音频扫描 | 初始化页 |
 | `/audio/update` | POST | 更新歌曲元数据 | 管理页 |
-| `/audio/delete` | DELETE | 删除/永久删除歌曲 | 管理页 |
+| `/audio/delete` | DELETE | 删除/彻底删除歌曲 | 管理页 |
 | `/audio/restore` | POST | 从回收站恢复 | 管理页 |
 | `/audio/recyclebin` | GET | 查询回收站 | 管理页 |
 
