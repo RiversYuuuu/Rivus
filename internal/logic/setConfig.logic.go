@@ -21,7 +21,8 @@ func (l *SetConfigLogic) SetConfig(req *generated.SetConfigRequest) (*generated.
 
 	// 转换为模型
 	config := model.Config{
-		AudioDir: *req.AudioDir,
+		AudioDir:       *req.AudioDir,
+		AcoustIDApiKey: *req.AcoustidApiKey,
 	}
 
 	// 校验音频目录是否存在

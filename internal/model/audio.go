@@ -12,9 +12,10 @@ type Audio struct {
 	MD5      string `gorm:"size:64;uniqueIndex;comment:文件哈希值"`
 
 	// 标签信息
-	Title  string `gorm:"size:255;index;comment:歌曲标题"`
-	Artist string `gorm:"size:255;index;comment:歌手"`
-	Album  string `gorm:"size:255;index;comment:专辑"`
+	Title    string  `gorm:"size:255;index;comment:歌曲标题"`
+	Artist   string  `gorm:"size:255;index;comment:歌手"`
+	Album    string  `gorm:"size:255;index;comment:专辑"`
+	Duration float64 `gorm:"comment:时长（秒）"`
 
 	// 关联文件路径
 	CoverPath string `gorm:"size:255;comment:专辑封面"`

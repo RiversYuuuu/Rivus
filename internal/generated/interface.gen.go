@@ -16,6 +16,9 @@ type ServerInterface interface {
 	// DeleteAudio 删除音频
 	// (DELETE /audio/delete)
 	DeleteAudio(c *gin.Context)
+	// FetchLyric 拉取歌词
+	// (GET /audio/lyric/fetch)
+	FetchLyric(c *gin.Context, params FetchLyricParams)
 	// GetLyricSource 获取歌词
 	// (GET /audio/lyric/source)
 	GetLyricSource(c *gin.Context, params GetLyricSourceParams)
@@ -31,6 +34,9 @@ type ServerInterface interface {
 	// ScanAudio 扫描音频目录，构建音频元数据
 	// (GET /audio/scan)
 	ScanAudio(c *gin.Context)
+	// ScrapeAudio 刮削音频元数据
+	// (GET /audio/scrape)
+	ScrapeAudio(c *gin.Context, params ScrapeAudioParams)
 	// SearchAudio 搜索音频
 	// (GET /audio/search)
 	SearchAudio(c *gin.Context, params SearchAudioParams)
@@ -74,6 +80,33 @@ func (siw *ServerInterfaceWrapper) DeleteAudio(c *gin.Context) {
 	}
 
 	siw.Handler.DeleteAudio(c)
+}
+
+// FetchLyric operation middleware
+func (siw *ServerInterfaceWrapper) FetchLyric(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params FetchLyricParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.FetchLyric(c, params)
 }
 
 // GetLyricSource operation middleware
@@ -191,6 +224,33 @@ func (siw *ServerInterfaceWrapper) ScanAudio(c *gin.Context) {
 	}
 
 	siw.Handler.ScanAudio(c)
+}
+
+// ScrapeAudio operation middleware
+func (siw *ServerInterfaceWrapper) ScrapeAudio(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ScrapeAudioParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ScrapeAudio(c, params)
 }
 
 // SearchAudio operation middleware
@@ -391,5 +451,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/audio/source", wrapper.GetAudioSource)
 	router.POST(options.BaseURL+"/audio/upload", wrapper.UploadAudio)
 	router.POST(options.BaseURL+"/audio/lyric/upload", wrapper.UploadLyric)
+	router.GET(options.BaseURL+"/audio/scrape", wrapper.ScrapeAudio)
+	router.GET(options.BaseURL+"/audio/lyric/fetch", wrapper.FetchLyric)
 	router.GET(options.BaseURL+"/audio/lyric/source", wrapper.GetLyricSource)
 }

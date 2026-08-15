@@ -96,6 +96,9 @@ type AudioItem struct {
 	// DeleteTime 删除时间
 	DeleteTime *string `json:"delete_time,omitempty"`
 
+	// Duration 时长（秒）
+	Duration *float32 `json:"duration,omitempty"`
+
 	// FileExt 音频文件扩展名
 	FileExt *string `json:"file_ext,omitempty"`
 
@@ -123,6 +126,9 @@ type AudioItem struct {
 
 // Config defines model for Config.
 type Config struct {
+	// AcoustidApiKey AcoustID API Key
+	AcoustidApiKey *string `json:"acoustid_api_key,omitempty"`
+
 	// AudioDir 音频目录
 	//
 	// Example: /c/users/default/Music
@@ -142,6 +148,19 @@ type DeleteAudioRequest struct {
 type DeleteAudioResponse struct {
 	// Code Example: 0
 	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// FetchLyricResponse defines model for FetchLyricResponse.
+type FetchLyricResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data *struct {
+		// SyncedLyrics 时间同步歌词（LRC格式，已转为简体中文）
+		SyncedLyrics *string `json:"synced_lyrics,omitempty"`
+	} `json:"data,omitempty"`
 
 	// Message Example: success
 	Message string `json:"message"`
@@ -215,6 +234,25 @@ type ScanAudioResponse struct {
 	Message string `json:"message"`
 }
 
+// ScrapeAudioResponse defines model for ScrapeAudioResponse.
+type ScrapeAudioResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data *struct {
+		// Album 专辑
+		Album *string `json:"album,omitempty"`
+
+		// Artist 艺术家
+		Artist *string `json:"artist,omitempty"`
+
+		// Title 歌曲标题
+		Title *string `json:"title,omitempty"`
+	} `json:"data,omitempty"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // SearchAudioResponse defines model for SearchAudioResponse.
 type SearchAudioResponse struct {
 	// Code Example: 0
@@ -279,6 +317,11 @@ type UploadResponse struct {
 	Message string `json:"message"`
 }
 
+// FetchLyricParams defines parameters for FetchLyric.
+type FetchLyricParams struct {
+	Id int `form:"id" json:"id"`
+}
+
 // GetLyricSourceParams defines parameters for GetLyricSource.
 type GetLyricSourceParams struct {
 	Id int `form:"id" json:"id"`
@@ -303,6 +346,11 @@ type GetRecycleBinParamsSortBy string
 
 // GetRecycleBinParamsSortOrder defines parameters for GetRecycleBin.
 type GetRecycleBinParamsSortOrder string
+
+// ScrapeAudioParams defines parameters for ScrapeAudio.
+type ScrapeAudioParams struct {
+	Id int `form:"id" json:"id"`
+}
 
 // SearchAudioParams defines parameters for SearchAudio.
 type SearchAudioParams struct {

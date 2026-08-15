@@ -98,7 +98,7 @@ func (l *ScanAudioLogic) buildFileInfo(audio *model.Audio, filePath string) {
 	audio.MD5 = hash
 }
 
-// buildTagInfo 填充标签信息：Title, Artist, Album
+// buildTagInfo 填充标签信息：Title, Artist, Album, Duration
 func (l *ScanAudioLogic) buildTagInfo(audio *model.Audio, filePath string) {
 	tags, err := taglib.ReadTags(filePath)
 	if err != nil {
@@ -115,6 +115,13 @@ func (l *ScanAudioLogic) buildTagInfo(audio *model.Audio, filePath string) {
 	if len(tags[taglib.Album]) > 0 {
 		audio.Album = tags[taglib.Album][0]
 	}
+
+	props, err := taglib.ReadProperties(filePath)
+	if err != nil {
+		l.Logger.Warn("Failed to read properties", "error", err, "path", filePath)
+		return
+	}
+	audio.Duration = props.Length.Seconds()
 }
 
 // buildRelatedFiles 填充关联文件路径：CoverPath, LyricPath

@@ -118,9 +118,43 @@
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-ghost" id="btnEditCancel">取消</button>
+        <button type="button" class="btn btn-smart" id="btnScrape" style="margin-top:0">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8.5 11h5M11 8.5v5"/></svg>
+          智能识别
+        </button>
         <button type="submit" class="btn btn-primary" id="btnEditSave" style="margin-top:0">保存修改</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ============ 歌词弹窗 ============ -->
+<div class="overlay" id="ovLyric">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="m-ic edit"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+      <div style="min-width:0;flex:1"><h3>歌词管理</h3><p id="lyricSongName"></p></div>
+    </div>
+    <div class="modal-body" style="padding-bottom:8px">
+      <div id="lyricActions" style="display:flex;flex-direction:column;gap:12px">
+        <button class="btn full big" id="btnLyricUpload" style="margin-top:0">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          本地上传
+        </button>
+        <button class="btn btn-smart full big" id="btnLyricFetch" style="margin-top:0">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8.5 11h5M11 8.5v5"/></svg>
+          智能搜索
+        </button>
+      </div>
+      <div id="lyricPreview" class="hidden">
+        <div style="font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:7px">歌词预览</div>
+        <div id="lyricPreviewText" style="background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:12px 13px;font-size:13px;color:var(--ink);max-height:220px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;font-family:'JetBrains Mono','Cascadia Code','Consolas',monospace"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="btnLyricCancel">取消</button>
+      <button type="button" class="btn btn-primary hidden" id="btnLyricConfirm" style="margin-top:0">确认上传</button>
+    </div>
   </div>
 </div>
 

@@ -110,6 +110,13 @@ func (l *UploadAudioLogic) buildTagInfo(audio *model.Audio) {
 	if len(tags[taglib.Album]) > 0 {
 		audio.Album = tags[taglib.Album][0]
 	}
+
+	props, err := taglib.ReadProperties(audio.FilePath)
+	if err != nil {
+		l.Logger.Warn("Failed to read properties", "error", err, "path", audio.FilePath)
+		return
+	}
+	audio.Duration = props.Length.Seconds()
 }
 
 func (l *UploadAudioLogic) buildRelatedFiles(audio *model.Audio) {

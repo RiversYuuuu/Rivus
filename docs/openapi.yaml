@@ -290,6 +290,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadResponse'
+  /audio/scrape:
+    get:
+      operationId: ScrapeAudio
+      summary: 刮削音频元数据
+      description: 通过 AcoustID 和 MusicBrainz 刮削音频元数据（标题、艺术家、专辑）
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 音频ID
+          required: true
+      responses:
+        '200':
+          description: 刮削成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapeAudioResponse'
+  /audio/lyric/fetch:
+    get:
+      operationId: FetchLyric
+      summary: 拉取歌词
+      description: 通过 LRCLIB 根据音频元数据拉取时间同步歌词（LRC格式）
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 音频ID
+          required: true
+      responses:
+        '200':
+          description: 拉取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FetchLyricResponse'
   /audio/lyric/source:
     get:
       x-codegen-skip: true
@@ -329,6 +369,9 @@ components:
           type: string
           example: /c/users/default/Music
           description: 音频目录
+        acoustid_api_key:
+          type: string
+          description: AcoustID API Key
     SetConfigRequest:
       type: object
       $ref: '#/components/schemas/Config'
@@ -401,6 +444,9 @@ components:
         album:
           type: string
           description: 专辑
+        duration:
+          type: number
+          description: 时长（秒）
         cover_path:
           type: string
           description: 封面路径
@@ -539,3 +585,41 @@ components:
         message:
           type: string
           example: success
+    ScrapeAudioResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            title:
+              type: string
+              description: 歌曲标题
+            artist:
+              type: string
+              description: 艺术家
+            album:
+              type: string
+              description: 专辑
+    FetchLyricResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            synced_lyrics:
+              type: string
+              description: 时间同步歌词（LRC格式，已转为简体中文）

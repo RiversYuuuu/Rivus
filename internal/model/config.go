@@ -1,9 +1,9 @@
 package model
 
-// Config 数据库模型
 type Config struct {
-	ID       uint   `gorm:"primaryKey"`
-	AudioDir string `gorm:"not null"`
+	ID             uint   `gorm:"primaryKey"`
+	AudioDir       string `gorm:"not null"`
+	AcoustIDApiKey string `gorm:"size:64"`
 }
 
 func (Config) TableName() string {

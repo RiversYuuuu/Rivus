@@ -53,11 +53,13 @@ func (l *GetRecycleBinLogic) GetRecycleBin(params generated.GetRecycleBinParams)
 	for i, a := range audios {
 		id := int(a.ID)
 		fileSize := int(a.FileSize)
+		duration := float32(a.Duration)
 		items[i] = generated.AudioItem{
 			Id:        &id,
 			Title:     &a.Title,
 			Artist:    &a.Artist,
 			Album:     &a.Album,
+			Duration:  &duration,
 			FilePath:  &a.FilePath,
 			FileExt:   &a.FileExt,
 			FileSize:  &fileSize,

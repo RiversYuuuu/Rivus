@@ -97,6 +97,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 2px}
 .btn.danger:hover:not(:disabled){color:#fff;box-shadow:0 8px 22px rgba(242,84,112,.35);filter:brightness(1.05)}
 .btn-outline{background:transparent;border-color:var(--amber);color:var(--amber)}
 .btn-outline:hover:not(:disabled){background:var(--mark);color:var(--amber)}
+.btn-smart{background:linear-gradient(135deg,var(--teal),#5ae6cc);color:#0a1a16;border:none;font-weight:700;letter-spacing:.06em}
+.btn-smart:hover:not(:disabled){color:#0a1a16;box-shadow:0 8px 24px rgba(56,208,181,.35);filter:brightness(1.06)}
 .full{width:100%}
 .big{padding:14px 18px;font-size:15px;margin-top:14px}
 

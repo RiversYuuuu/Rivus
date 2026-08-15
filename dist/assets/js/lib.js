@@ -396,6 +396,43 @@ function downloadLyric(id, title) {
 }
 
 function uploadLyric(id) {
+  openLyricModal(id);
+}
+
+let lyricModalId = null;
+let fetchedLyricText = null;
+
+function openLyricModal(id) {
+  lyricModalId = id;
+  fetchedLyricText = null;
+  const row = document.querySelector(`.song-row[data-id="${id}"]`);
+  const title = row ? (row.querySelector('.tt')?.textContent || '') : '';
+  $('#lyricSongName').textContent = title || `ID: ${id}`;
+  showLyricActions();
+  $('#ovLyric').classList.add('show');
+}
+
+function closeLyricModal() {
+  $('#ovLyric').classList.remove('show');
+  lyricModalId = null;
+  fetchedLyricText = null;
+}
+
+function showLyricActions() {
+  $('#lyricActions').classList.remove('hidden');
+  $('#lyricPreview').classList.add('hidden');
+  $('#btnLyricConfirm').classList.add('hidden');
+}
+
+function showLyricPreview(text) {
+  fetchedLyricText = text;
+  $('#lyricActions').classList.add('hidden');
+  $('#lyricPreviewText').textContent = text;
+  $('#lyricPreview').classList.remove('hidden');
+  $('#btnLyricConfirm').classList.remove('hidden');
+}
+
+function doUploadLyric(id) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.lrc';
@@ -409,7 +446,7 @@ function uploadLyric(id) {
       fd.append('file', file);
       const res = await fetch('/audio/lyric/upload', { method: 'POST', body: fd });
       const data = await res.json();
-      if (data.code === 0) showToast('歌词上传成功');
+      if (data.code === 0) { showToast('歌词上传成功'); closeLyricModal(); }
       else showToast(data.message || '歌词上传失败', 'warn');
     } catch (e) {
       showToast('歌词上传失败: ' + e.message, 'err');
@@ -420,10 +457,54 @@ function uploadLyric(id) {
   input.click();
 }
 
+async function doFetchLyric(id) {
+  const btn = $('#btnLyricFetch');
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin" style="width:16px;height:16px;border-width:2px"></span> 搜索中…';
+  try {
+    const res = await apiGet('/audio/lyric/fetch', { id: id });
+    if (res.code === 0 && res.data && res.data.synced_lyrics) {
+      showLyricPreview(res.data.synced_lyrics);
+    } else {
+      showToast(res.message || '未找到歌词', 'warn');
+    }
+  } catch (e) {
+    showToast('歌词搜索失败: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+}
+
+async function doConfirmLyric(id) {
+  if (!fetchedLyricText) return;
+  const btn = $('#btnLyricConfirm');
+  btn.disabled = true;
+  btn.textContent = '上传中…';
+  try {
+    const blob = new Blob([fetchedLyricText], { type: 'text/plain' });
+    const file = new File([blob], 'lyric.lrc', { type: 'text/plain' });
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('file', file);
+    const res = await fetch('/audio/lyric/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.code === 0) { showToast('歌词上传成功'); closeLyricModal(); }
+    else showToast(data.message || '歌词上传失败', 'warn');
+  } catch (e) {
+    showToast('歌词上传失败: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '确认上传';
+  }
+}
+
 /* ---------- keyboard shortcuts ---------- */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeEdit();
+    closeLyricModal();
     closeConfirm();
   }
   if (e.key === '/' && document.activeElement === document.body) {
@@ -508,6 +589,30 @@ function bindEvents() {
   $('#btnEditCancel').addEventListener('click', closeEdit);
   $('#ovEdit').addEventListener('click', (e) => { if (e.target === $('#ovEdit')) closeEdit(); });
 
+  $('#btnScrape').addEventListener('click', async () => {
+    if (!editingId) return;
+    const btn = $('#btnScrape');
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin" style="width:16px;height:16px;border-width:2px"></span> 识别中…';
+    try {
+      const res = await apiGet('/audio/scrape', { id: editingId });
+      if (res.code === 0 && res.data) {
+        if (res.data.title) $('#eTitle').value = res.data.title;
+        if (res.data.artist) $('#eArtist').value = res.data.artist;
+        if (res.data.album) $('#eAlbum').value = res.data.album;
+        showToast('智能识别成功');
+      } else {
+        showToast(res.message || '智能识别失败', 'warn');
+      }
+    } catch (e) {
+      showToast('智能识别失败: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+    }
+  });
+
   $('#editForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const title = $('#eTitle').value.trim();
@@ -535,6 +640,12 @@ function bindEvents() {
   $('#btnConfirmCancel').addEventListener('click', closeConfirm);
   $('#btnConfirmOk').addEventListener('click', () => { if (confirmCb) confirmCb(); });
   $('#ovConfirm').addEventListener('click', (e) => { if (e.target === $('#ovConfirm')) closeConfirm(); });
+
+  $('#btnLyricCancel').addEventListener('click', closeLyricModal);
+  $('#ovLyric').addEventListener('click', (e) => { if (e.target === $('#ovLyric')) closeLyricModal(); });
+  $('#btnLyricUpload').addEventListener('click', () => { if (lyricModalId) doUploadLyric(lyricModalId); });
+  $('#btnLyricFetch').addEventListener('click', () => { if (lyricModalId) doFetchLyric(lyricModalId); });
+  $('#btnLyricConfirm').addEventListener('click', () => { if (lyricModalId) doConfirmLyric(lyricModalId); });
 
   $$('.tab').forEach((tab) => {
     tab.addEventListener('click', () => {
