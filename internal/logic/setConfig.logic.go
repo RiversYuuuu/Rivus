@@ -19,10 +19,18 @@ func NewSetConfigLogic(l *Logic) *SetConfigLogic {
 // SetConfig 配置接口
 func (l *SetConfigLogic) SetConfig(req *generated.SetConfigRequest) (*generated.SetConfigResponse, error) {
 
-	// 转换为模型
+	var audioDir string
+	if req.AudioDir != nil {
+		audioDir = *req.AudioDir
+	}
+	var acoustidApiKey string
+	if req.AcoustidApiKey != nil {
+		acoustidApiKey = *req.AcoustidApiKey
+	}
+
 	config := model.Config{
-		AudioDir:       *req.AudioDir,
-		AcoustIDApiKey: *req.AcoustidApiKey,
+		AudioDir:       audioDir,
+		AcoustIDApiKey: acoustidApiKey,
 	}
 
 	// 校验音频目录是否存在
