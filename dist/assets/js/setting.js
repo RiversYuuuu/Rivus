@@ -4,7 +4,10 @@
 
 function initSetup() {
   const dirInput = $('#dirInput');
-  const btnStart = $('#btnStart');
+  const acoustidInput = $('#acoustidInput');
+  const btnSave = $('#btnSave');
+  const btnScan = $('#btnScan');
+  const scanBtnText = $('#scanBtnText');
   const btnEnterLib = $('#btnEnterLib');
   const dirNote = $('#dirNote');
   const scanPanel = $('#scanPanel');
@@ -16,7 +19,12 @@ function initSetup() {
   $('#step2').classList.remove('on', 'done');
   $('#step3').classList.remove('on', 'done');
   btnEnterLib.classList.add('hidden');
-  btnStart.disabled = true;
+  btnSave.disabled = true;
+  btnScan.disabled = true;
+
+  function updateScanBtnLabel() {
+    scanBtnText.textContent = state.configSaved ? '重新扫描' : '开始扫描';
+  }
 
   async function checkDir(path) {
     if (!path) return;
@@ -25,18 +33,24 @@ function initSetup() {
       const cfg = await apiGet('/config');
       dirNote.classList.remove('hidden');
       if (cfg.data && cfg.data.audio_dir === path) {
-        dirNote.innerHTML = '<span style="color:var(--green)">&#10003; 该目录已配置，可直接进入管理</span>';
-        btnStart.disabled = false;
+        dirNote.innerHTML = '<span style="color:var(--green)">&#10003; 该目录已配置</span>';
+        state.configSaved = true;
+        btnSave.disabled = false;
+        btnScan.disabled = false;
         btnEnterLib.classList.remove('hidden');
       } else {
         dirNote.innerHTML = '<span style="color:var(--amber)">&#9888; 将设置为新的音频目录</span>';
-        btnStart.disabled = false;
+        state.configSaved = false;
+        btnSave.disabled = false;
+        btnScan.disabled = true;
         btnEnterLib.classList.add('hidden');
       }
+      updateScanBtnLabel();
     } catch (e) {
       dirNote.classList.remove('hidden');
       dirNote.innerHTML = '<span style="color:var(--amber)">&#9888; 无法连接后端，请确认服务已启动</span>';
-      btnStart.disabled = true;
+      btnSave.disabled = true;
+      btnScan.disabled = true;
       btnEnterLib.classList.add('hidden');
     }
   }
@@ -44,23 +58,41 @@ function initSetup() {
   dirInput.addEventListener('input', () => {
     const v = dirInput.value.trim();
     if (v) checkDir(v);
-    else { btnStart.disabled = true; dirNote.classList.add('hidden'); btnEnterLib.classList.add('hidden'); }
+    else {
+      btnSave.disabled = true;
+      btnScan.disabled = true;
+      dirNote.classList.add('hidden');
+      btnEnterLib.classList.add('hidden');
+    }
   });
 
-  btnStart.addEventListener('click', startScan);
+  acoustidInput.addEventListener('input', () => {
+    state.acoustidApiKey = acoustidInput.value.trim();
+  });
+
+  btnSave.addEventListener('click', saveConfig);
+  btnScan.addEventListener('click', startScan);
 
   /* ----- auto-load existing config on page load ----- */
   (async () => {
     try {
       const cfg = await apiGet('/config');
-      if (cfg.code === 0 && cfg.data && cfg.data.audio_dir) {
-        const existingDir = cfg.data.audio_dir;
-        state.audioDir = existingDir;
-        dirInput.value = existingDir;
-        dirNote.classList.remove('hidden');
-        dirNote.innerHTML = '<span style="color:var(--green)">&#10003; 该目录已配置，可直接进入管理</span>';
-        btnStart.disabled = false;
-        btnEnterLib.classList.remove('hidden');
+      if (cfg.code === 0 && cfg.data) {
+        if (cfg.data.audio_dir) {
+          state.audioDir = cfg.data.audio_dir;
+          dirInput.value = cfg.data.audio_dir;
+          state.configSaved = true;
+          dirNote.classList.remove('hidden');
+          dirNote.innerHTML = '<span style="color:var(--green)">&#10003; 该目录已配置</span>';
+          btnSave.disabled = false;
+          btnScan.disabled = false;
+          btnEnterLib.classList.remove('hidden');
+        }
+        if (cfg.data.acoustid_api_key) {
+          state.acoustidApiKey = cfg.data.acoustid_api_key;
+          acoustidInput.value = cfg.data.acoustid_api_key;
+        }
+        updateScanBtnLabel();
       }
     } catch (e) {
       /* backend not available, leave input empty */
@@ -68,14 +100,45 @@ function initSetup() {
   })();
 }
 
+async function saveConfig() {
+  const dir = state.audioDir;
+  if (!dir) return;
+
+  const btnSave = $('#btnSave');
+  const btnScan = $('#btnScan');
+  const btnOrigHTML = btnSave.innerHTML;
+  btnSave.disabled = true;
+  btnSave.innerHTML = '<span class="spin"></span> 保存中…';
+
+  try {
+    const res = await apiPost('/config', { audio_dir: dir, acoustid_api_key: state.acoustidApiKey || '' });
+    if (res.code === 0) {
+      state.configSaved = true;
+      btnScan.disabled = false;
+      $('#scanBtnText').textContent = '重新扫描';
+      const dirNote = $('#dirNote');
+      dirNote.classList.remove('hidden');
+      dirNote.innerHTML = '<span style="color:var(--green)">&#10003; 设置已保存</span>';
+      showToast('设置已保存');
+    } else {
+      showToast('保存失败: ' + (res.message || '未知错误'), 'warn');
+    }
+  } catch (e) {
+    showToast('连接失败: ' + e.message, 'warn');
+  }
+
+  btnSave.disabled = false;
+  btnSave.innerHTML = btnOrigHTML;
+}
+
 async function startScan() {
   const dir = state.audioDir;
   if (!dir) return;
 
-  const btnStart = $('#btnStart');
-  const btnOrigHTML = btnStart.innerHTML;
-  btnStart.disabled = true;
-  btnStart.innerHTML = '<span class="spin"></span> 扫描中…';
+  const btnScan = $('#btnScan');
+  const btnOrigHTML = btnScan.innerHTML;
+  btnScan.disabled = true;
+  btnScan.innerHTML = '<span class="spin"></span> 扫描中…';
 
   const scanPanel = $('#scanPanel');
   scanPanel.classList.remove('hidden');
@@ -103,20 +166,10 @@ async function startScan() {
     log.scrollTop = log.scrollHeight;
   }
 
-  addLog('正在连接后端服务...', 'info');
+  addLog('开始扫描音频文件...', 'info');
   addLog(`目标目录: ${dir}`, 'dim');
 
   try {
-    const cfgRes = await apiPost('/config', { audio_dir: dir });
-    if (cfgRes.code !== 0) {
-      addLog('配置目录失败: ' + (cfgRes.message || '未知错误'), 'warn');
-      btnStart.disabled = false;
-      btnStart.innerHTML = btnOrigHTML;
-      return;
-    }
-    addLog('目录配置已保存', 'ok');
-
-    addLog('开始扫描音频文件...', 'info');
     const startTime = Date.now();
 
     state.scanTimer = setInterval(() => {
@@ -143,15 +196,15 @@ async function startScan() {
       }, 1500);
     } else {
       addLog('扫描失败: ' + (scanRes.message || '未知错误'), 'warn');
-      btnStart.disabled = false;
-      btnStart.innerHTML = btnOrigHTML;
+      btnScan.disabled = false;
+      btnScan.innerHTML = btnOrigHTML;
     }
   } catch (e) {
     clearInterval(state.scanTimer);
     addLog('连接失败: ' + e.message, 'warn');
     addLog('请确认后端服务已启动', 'dim');
-    btnStart.disabled = false;
-    btnStart.innerHTML = btnOrigHTML;
+    btnScan.disabled = false;
+    btnScan.innerHTML = btnOrigHTML;
   }
 }
 

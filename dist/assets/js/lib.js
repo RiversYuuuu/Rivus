@@ -549,7 +549,7 @@ function bindEvents() {
   });
 
   $('#btnRescan').addEventListener('click', () => {
-    leavePage('/audiopage/init');
+    leavePage('/audiopage/setting');
   });
 
   $('#btnUpload').addEventListener('click', () => {

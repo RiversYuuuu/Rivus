@@ -57,8 +57,8 @@ func main() {
 	r.GET("/audiopage/console", func(c *gin.Context) {
 		c.File("./dist/assets/html/audiopage/console.html")
 	})
-	r.GET("/audiopage/init", func(c *gin.Context) {
-		c.File("./dist/assets/html/audiopage/init.html")
+	r.GET("/audiopage/setting", func(c *gin.Context) {
+		c.File("./dist/assets/html/audiopage/setting.html")
 	})
 
 	r.NoRoute(func(c *gin.Context) {

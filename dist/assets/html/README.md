@@ -9,17 +9,17 @@ dist/
 │   │   ├── index.html            # 首页：模块选择入口
 │   │   └── audiopage/
 │   │       ├── console.html      # 音频管理：曲库浏览、搜索、编辑、播放
-│   │       └── init.html         # 音频初始化：目录配置、扫描建档
+│   │       └── setting.html      # 曲库设置：目录配置、AcoustID 配置、扫描
 │   ├── css/                      # 样式文件
 │   │   ├── common.css            # ★ 公共样式（变量、按钮、弹窗、通知、动画）
 │   │   ├── home.css              # 首页专属样式（模块卡片、状态面板）
-│   │   ├── init.css              # 初始化页专属样式（扫描面板、步骤指示器、控制台）
+│   │   ├── setting.css           # 设置页专属样式（扫描面板、步骤指示器、控制台）
 │   │   ├── lib.css               # 管理页专属样式（搜索栏、表格、分页、统计条）
 │   │   └── player.css            # 播放器专属样式（底部播放栏、音量弹出窗）
 │   └── js/                       # 脚本文件
 │       ├── common.js             # ★ 公共逻辑（state、API封装、主题、通知、工具函数）
 │       ├── home.js               # 首页逻辑（加载状态、模块卡片点击）
-│       ├── init.js               # 初始化页逻辑（目录检测、扫描流程、按钮状态管理）
+│       ├── setting.js            # 设置页逻辑（目录检测、配置保存、扫描流程、按钮状态管理）
 │       ├── lib.js                # 管理页逻辑（曲库加载、表格渲染、分页、编辑/删除弹窗、离开拦截）
 │       └── player.js             # 播放器逻辑（独立模块，含音量控制与静音切换）
 ```
@@ -30,7 +30,7 @@ dist/
 |---|---|---|---|
 | `/` | `r.GET("/", ...)` | `assets/html/index.html` | 首页：模块选择、系统状态 |
 | `/audiopage/console` | `r.GET("/audiopage/console", ...)` | `assets/html/audiopage/console.html` | 音频管理：曲库、搜索、播放 |
-| `/audiopage/init` | `r.GET("/audiopage/init", ...)` | `assets/html/audiopage/init.html` | 音频初始化：目录配置、扫描 |
+| `/audiopage/setting` | `r.GET("/audiopage/setting", ...)` | `assets/html/audiopage/setting.html` | 曲库设置：目录配置、AcoustID 配置、扫描 |
 | 其他所有路径 | `r.NoRoute(...)` | → 302 重定向到 `/` | 兜底处理 |
 
 静态资源由 `r.Static("/assets", "./dist/assets")` 统一挂载，所有 CSS/JS 通过绝对路径 `/assets/...` 引用。
@@ -52,11 +52,11 @@ audiopage/console.html
 ├── /assets/js/lib.js            ← 管理页专属逻辑
 └── /assets/js/player.js         ← 播放器逻辑
 
-audiopage/init.html
+audiopage/setting.html
 ├── /assets/css/common.css       ← 公共样式
-├── /assets/css/init.css         ← 初始化页专属样式
+├── /assets/css/setting.css      ← 设置页专属样式
 ├── /assets/js/common.js         ← 公共逻辑
-└── /assets/js/init.js           ← 初始化页专属逻辑
+└── /assets/js/setting.js        ← 设置页专属逻辑
 ```
 
 ## 四、JS 模块职责
@@ -73,14 +73,15 @@ audiopage/init.html
 
 ### home.js — 首页
 - `loadHomeStatus()`：调用 `/config` 和 `/audio/search` 获取系统状态、曲库统计
-- 根据 `state.audioDir` 是否为空，决定点击音频卡片跳转到 `/audiopage/console` 还是 `/audiopage/init`
+- 根据 `state.audioDir` 是否为空，决定点击音频卡片跳转到 `/audiopage/console` 还是 `/audiopage/setting`
 - 未开放模块（图片/视频）点击显示"即将上线"提示
 
-### init.js — 初始化页
-- **自动加载**：页面加载时调用 `/config` 检查是否已有配置，有则自动填入目录并显示"进入管理页面"按钮
+### setting.js — 设置页
+- **自动加载**：页面加载时调用 `/config` 检查是否已有配置，有则自动填入目录与 AcoustID API Key 并显示"进入管理页面"按钮
 - `checkDir(path)`：用户输入目录后，对比后端配置判断是否已配置
-- `startScan()`：置灰按钮 → 文字变为"扫描中…"（带旋转动画）→ 配置目录 → 扫描 → 成功后跳转管理页
-- **失败恢复**：配置失败/扫描失败/连接异常时，恢复按钮文字和可用状态
+- `saveConfig()`：保存配置（音频目录 + AcoustID API Key），成功后启用扫描按钮
+- `startScan()`：触发扫描 → 成功后跳转管理页
+- **失败恢复**：配置保存失败/扫描失败/连接异常时，恢复按钮文字和可用状态
 
 ### lib.js — 管理页
 - `loadLibrary()`：加载曲库/回收站数据，支持分页、排序、搜索、范围过滤
@@ -89,7 +90,7 @@ audiopage/init.html
 - `openEdit(id)` / `closeEdit()`：编辑弹窗
 - `confirmAction(action, id)`：确认弹窗（删除/恢复/彻底删除）
 - `navigateToSong(songId)`：定位到指定歌曲所在页
-- **离开拦截**：正在播放时点击"返回主页"或"重新扫描"弹出确认弹窗（确认/取消按钮居中，确认按钮琥珀色高亮），`beforeunload` 拦截浏览器级离开
+- **离开拦截**：正在播放时点击"返回主页"或"设置"弹出确认弹窗（确认/取消按钮居中，确认按钮琥珀色高亮），`beforeunload` 拦截浏览器级离开
 - 键盘快捷键：`Esc` 关闭弹窗，`/` 聚焦搜索框
 
 ### player.js — 播放器
@@ -117,12 +118,16 @@ audiopage/init.html
 - `.audio-meta`：曲库统计信息
 - `.lock-tag` / `.mod-locked`：未开放模块的锁定样式
 
-### init.css — 初始化页
+### setting.css — 设置页
 - `.setup-wrap`：左右分栏布局
 - `.steps`：三步指示器（选择目录 → 扫描建档 → 开始管理）
 - `.scan-card` / `.console`：扫描面板、控制台日志
 - `.pulse-dot`：扫描中的脉冲动画点
 - `.dir-input` / `.dir-row`：目录输入框
+- `.field-group`：字段组间距
+- `.tip` / `.tip-text`：提示信息（hover 显示）
+- `.req`：必填红色星号
+- `.btn-row`：保存设置与扫描按钮并排
 
 ### lib.css — 管理页
 - `.search-box` / `.seg`：搜索栏与范围分段选择器
@@ -150,11 +155,11 @@ audiopage/init.html
       │                       是   │       │  否
       │                            ▼       ▼
       │                  ┌────────────┐ ┌────────────┐
-      │                  │  console   │ │    init     │
-      │                  │  (管理页)   │ │  (初始化页)  │
+      │                  │  console   │ │  setting    │
+      │                  │  (管理页)   │ │  (设置页)    │
       │                  └─────┬──────┘ └─────┬──────┘
       │                        │              │
-      │     "重新扫描"          │    扫描完成    │
+      │     "设置"             │    扫描完成    │
       │  ◄─────────────────────┘  ◄───────────┘
       │
       └── 顶部"返回"按钮可回到首页
@@ -166,10 +171,10 @@ audiopage/init.html
 
 | 接口 | 方法 | 用途 | 调用页面 |
 |---|---|---|---|
-| `/config` | GET | 获取当前配置（含 audio_dir） | 首页、初始化页 |
-| `/config` | POST | 设置音频目录 | 初始化页 |
+| `/config` | GET | 获取当前配置（含 audio_dir） | 首页、设置页 |
+| `/config` | POST | 设置配置（音频目录、AcoustID API Key） | 设置页 |
 | `/audio/search` | GET | 搜索/分页查询歌曲 | 首页、管理页 |
-| `/audio/scan` | GET | 触发音频扫描 | 初始化页 |
+| `/audio/scan` | GET | 触发音频扫描 | 设置页 |
 | `/audio/update` | POST | 更新歌曲元数据 | 管理页 |
 | `/audio/delete` | DELETE | 删除/彻底删除歌曲 | 管理页 |
 | `/audio/restore` | POST | 从回收站恢复 | 管理页 |

@@ -51,7 +51,7 @@ function bindEvents() {
     if (state.audioDir) {
       window.location.href = '/audiopage/console';
     } else {
-      window.location.href = '/audiopage/init';
+      window.location.href = '/audiopage/setting';
     }
   });
 

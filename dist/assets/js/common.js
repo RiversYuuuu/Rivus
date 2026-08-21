@@ -9,6 +9,8 @@ const $$ = (s) => document.querySelectorAll(s);
 const state = {
   theme: 'dark',
   audioDir: '',
+  acoustidApiKey: '',
+  configSaved: false,
   currentTab: 'lib',
   page: 1,
   pageSize: 10,
