@@ -2,6 +2,7 @@ package logic
 
 import (
 	generated "MultiMediaManager/internal/generated"
+	"MultiMediaManager/internal/tool"
 
 	"go.senan.xyz/taglib"
 )
@@ -35,6 +36,13 @@ func (l *UpdateAudioLogic) UpdateAudio(req *generated.UpdateAudioRequest) (*gene
 	if err != nil {
 		return nil, err
 	}
+
+	// 重新计算音频MD5值
+	hash, err := tool.ComputeMD5(audio.FilePath)
+	if err != nil {
+		return nil, err
+	}
+	audio.MD5 = hash
 
 	// 更新音频信息
 	if req.Title != nil {
