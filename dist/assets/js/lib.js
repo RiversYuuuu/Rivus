@@ -506,6 +506,7 @@ document.addEventListener('keydown', (e) => {
     closeEdit();
     closeLyricModal();
     closeConfirm();
+    closeSyncModal();
   }
   if (e.key === '/' && document.activeElement === document.body) {
     e.preventDefault();
@@ -700,10 +701,395 @@ function bindEvents() {
   });
 }
 
+/* ---------- sync modal ---------- */
+const syncState = {
+  step: 1,
+  connected: false,
+  ip: '',
+  port: 2121,
+  username: '',
+  password: '',
+  directory: '/',
+  dirHistory: ['/'],
+  allDirs: [],
+  toUpload: [],
+  toDownload: [],
+};
+
+function openSyncModal() {
+  syncState.step = 1;
+  syncState.connected = false;
+  syncState.directory = '/';
+  syncState.dirHistory = ['/'];
+  syncState.toUpload = [];
+  syncState.toDownload = [];
+  $('#ovSync').classList.add('show');
+  $('#syncIp').value = '';
+  $('#syncPort').value = '2121';
+  $('#syncUser').value = 'Admin';
+  $('#syncPass').value = '';
+  $('#syncConnStatus').textContent = '';
+  $('#syncConnStatus').className = 'sync-conn-status';
+  renderSyncStep();
+}
+
+function closeSyncModal() {
+  $('#ovSync').classList.remove('show');
+}
+
+function renderSyncStep() {
+  const step = syncState.step;
+
+  for (let i = 1; i <= 4; i++) {
+    const el = $(`#syncStep${i}`);
+    el.classList.remove('active', 'done');
+    if (i < step) el.classList.add('done');
+    if (i === step) el.classList.add('active');
+  }
+
+  for (let i = 1; i <= 4; i++) {
+    $(`#syncPanel${i}`).classList.toggle('hidden', i !== step);
+  }
+
+  $('#btnSyncTest').classList.toggle('hidden', step !== 1);
+  $('#btnSyncPrev').classList.toggle('hidden', step === 1);
+  $('#btnSyncNext').classList.toggle('hidden', step !== 2);
+  $('#btnSyncCompare').classList.toggle('hidden', step !== 3);
+  $('#btnSyncExecute').classList.toggle('hidden', step !== 3);
+  $('#btnSyncDone').classList.toggle('hidden', step !== 4);
+
+  const subtitles = {
+    1: '连接远程 FTP 服务器，同步音频文件',
+    2: '选择远程 FTP 上的音频目录',
+    3: '对比本地与远程文件差异',
+    4: '执行文件同步操作',
+  };
+  $('#syncSubtitle').textContent = subtitles[step] || '';
+
+  if (step === 2) {
+    loadSyncDirs(syncState.directory);
+  }
+}
+
+function getSyncCreds() {
+  return {
+    ip: $('#syncIp').value.trim(),
+    port: parseInt($('#syncPort').value) || 2121,
+    username: $('#syncUser').value.trim(),
+    password: $('#syncPass').value,
+  };
+}
+
+async function testSyncConnection() {
+  const { ip, port, username, password } = getSyncCreds();
+  if (!ip) {
+    showToast('请填写 FTP 地址', 'warn');
+    return;
+  }
+
+  const btn = $('#btnSyncTest');
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin" style="width:14px;height:14px;border-width:2px"></span> 连接中…';
+
+  try {
+    const res = await apiPost('/audio/sync/test-connection', { ip, port, username, password });
+    if (res.code === 0) {
+      syncState.connected = true;
+      syncState.ip = ip;
+      syncState.port = port;
+      syncState.username = username;
+      syncState.password = password;
+      $('#syncConnStatus').textContent = '✓ 连接成功';
+      $('#syncConnStatus').className = 'sync-conn-status ok';
+      showToast('FTP 连接成功');
+      syncState.step = 2;
+      renderSyncStep();
+    } else {
+      syncState.connected = false;
+      $('#syncConnStatus').textContent = '✗ 连接失败: ' + (res.message || '未知错误');
+      $('#syncConnStatus').className = 'sync-conn-status fail';
+    }
+  } catch (e) {
+    syncState.connected = false;
+    $('#syncConnStatus').textContent = '✗ 连接失败: ' + e.message;
+    $('#syncConnStatus').className = 'sync-conn-status fail';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+}
+
+function renderSyncBreadcrumb(directory) {
+  const bc = $('#syncBreadcrumb');
+  const segments = directory === '/' ? [''] : directory.split('/');
+  const MAX_SHOW = 4;
+
+  let html = '';
+  const len = segments.length;
+
+  if (len <= MAX_SHOW) {
+    segments.forEach((seg, i) => {
+      const path = i === 0 ? '/' : segments.slice(0, i + 1).join('/');
+      const label = i === 0 ? '/' : seg;
+      const isCurrent = i === len - 1;
+      if (i > 0) html += '<span class="sync-bc-sep">›</span>';
+      html += `<span class="sync-bc-item${isCurrent ? ' current' : ''}" data-path="${esc(path)}">${esc(label)}</span>`;
+    });
+  } else {
+    const firstPath = '/';
+    html += `<span class="sync-bc-item" data-path="/">/</span>`;
+    html += '<span class="sync-bc-sep">›</span>';
+    html += '<span class="sync-bc-ellipsis" title="展开中间路径">…</span>';
+    html += '<span class="sync-bc-sep">›</span>';
+    const lastSeg = segments[len - 1];
+    html += `<span class="sync-bc-item current" data-path="${esc(directory)}">${esc(lastSeg)}</span>`;
+  }
+
+  bc.innerHTML = html;
+
+  bc.querySelectorAll('.sync-bc-item:not(.current)').forEach(item => {
+    item.addEventListener('click', () => {
+      const path = item.dataset.path;
+      const idx = syncState.dirHistory.indexOf(path);
+      if (idx >= 0) {
+        syncState.dirHistory = syncState.dirHistory.slice(0, idx + 1);
+      } else {
+        syncState.dirHistory.push(path);
+      }
+      loadSyncDirs(path);
+    });
+  });
+
+  const ellipsis = bc.querySelector('.sync-bc-ellipsis');
+  if (ellipsis) {
+    ellipsis.addEventListener('click', () => {
+      let fullHtml = '';
+      segments.forEach((seg, i) => {
+        const path = i === 0 ? '/' : segments.slice(0, i + 1).join('/');
+        const label = i === 0 ? '/' : seg;
+        const isCurrent = i === len - 1;
+        if (i > 0) fullHtml += '<span class="sync-bc-sep">›</span>';
+        fullHtml += `<span class="sync-bc-item${isCurrent ? ' current' : ''}" data-path="${esc(path)}">${esc(label)}</span>`;
+      });
+      bc.innerHTML = fullHtml;
+      bc.querySelectorAll('.sync-bc-item:not(.current)').forEach(item => {
+        item.addEventListener('click', () => {
+          const path = item.dataset.path;
+          const idx = syncState.dirHistory.indexOf(path);
+          if (idx >= 0) {
+            syncState.dirHistory = syncState.dirHistory.slice(0, idx + 1);
+          } else {
+            syncState.dirHistory.push(path);
+          }
+          loadSyncDirs(path);
+        });
+      });
+    });
+  }
+}
+
+async function loadSyncDirs(directory) {
+  syncState.directory = directory;
+  renderSyncBreadcrumb(directory);
+  $('#syncDirFilter').value = '';
+  const list = $('#syncDirList');
+  list.innerHTML = '<div class="sync-dir-loading"><span class="spin" style="width:14px;height:14px;border-width:2px"></span> 加载中...</div>';
+
+  try {
+    const res = await apiGet('/audio/sync/browse', {
+      directory,
+      ip: syncState.ip,
+      port: syncState.port,
+      username: syncState.username,
+      password: syncState.password,
+    });
+
+    if (res.code === 0 && res.data && res.data.dirs) {
+      syncState.allDirs = res.data.dirs;
+      renderSyncDirList('');
+    } else {
+      syncState.allDirs = [];
+      list.innerHTML = '<div class="sync-dir-empty">加载失败: ' + (res.message || '未知错误') + '</div>';
+    }
+  } catch (e) {
+    syncState.allDirs = [];
+    list.innerHTML = '<div class="sync-dir-empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function renderSyncDirList(filter) {
+  const list = $('#syncDirList');
+  const directory = syncState.directory;
+  const keyword = filter.toLowerCase();
+  const dirs = keyword ? syncState.allDirs.filter(d => d.toLowerCase().includes(keyword)) : syncState.allDirs;
+
+  if (dirs.length === 0) {
+    list.innerHTML = '<div class="sync-dir-empty">' + (keyword ? '无匹配目录' : '该目录下无子目录') + '</div>';
+    return;
+  }
+
+  list.innerHTML = dirs.map(d => `
+    <div class="sync-dir-item" data-dir="${esc(d)}">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      ${esc(d)}
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.sync-dir-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const dir = item.dataset.dir;
+      const newPath = directory === '/' ? '/' + dir : directory + '/' + dir;
+      syncState.dirHistory.push(newPath);
+      loadSyncDirs(newPath);
+    });
+  });
+}
+
+async function doSyncCompare() {
+  $('#syncCompareLoading').classList.remove('hidden');
+  $('#syncCompareResult').classList.add('hidden');
+  syncState.step = 3;
+  renderSyncStep();
+
+  try {
+    const res = await apiPost('/audio/sync/compare', {
+      ip: syncState.ip,
+      port: syncState.port,
+      username: syncState.username,
+      password: syncState.password,
+      directory: syncState.directory,
+    });
+
+    $('#syncCompareLoading').classList.add('hidden');
+
+    if (res.code === 0 && res.data) {
+      const data = res.data;
+      const toUpload = data.to_upload || [];
+      const toDownload = data.to_download || [];
+      const unchanged = data.unchanged || 0;
+
+      syncState.toUpload = toUpload;
+      syncState.toDownload = toDownload;
+
+      $('#syncUploadCount').textContent = toUpload.length;
+      $('#syncDownloadCount').textContent = toDownload.length;
+      $('#syncUnchangedCount').textContent = unchanged;
+
+      if (toUpload.length > 0) {
+        $('#syncUploadList').innerHTML = '<b>待上传文件</b>' + toUpload.map(f => '<div>' + esc(f) + '</div>').join('');
+        $('#syncUploadList').classList.remove('hidden');
+      } else {
+        $('#syncUploadList').innerHTML = '';
+      }
+
+      if (toDownload.length > 0) {
+        $('#syncDownloadList').innerHTML = '<b>待下载文件</b>' + toDownload.map(f => '<div>' + esc(f) + '</div>').join('');
+        $('#syncDownloadList').classList.remove('hidden');
+      } else {
+        $('#syncDownloadList').innerHTML = '';
+      }
+
+      $('#syncCompareResult').classList.remove('hidden');
+
+      if (toUpload.length === 0 && toDownload.length === 0) {
+        showToast('本地与远程完全一致，无需同步', 'ok');
+      }
+    } else {
+      showToast('对比失败: ' + (res.message || '未知错误'), 'warn');
+      syncState.step = 2;
+      renderSyncStep();
+    }
+  } catch (e) {
+    $('#syncCompareLoading').classList.add('hidden');
+    showToast('对比失败: ' + e.message, 'err');
+    syncState.step = 2;
+    renderSyncStep();
+  }
+}
+
+async function doSyncExecute() {
+  const btn = $('#btnSyncExecute');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin" style="width:14px;height:14px;border-width:2px"></span> 执行中…';
+
+  syncState.step = 4;
+  renderSyncStep();
+  $('#syncExecuteStatus').classList.remove('hidden');
+  $('#syncExecuteDone').classList.add('hidden');
+
+  try {
+    const res = await apiPost('/audio/sync/execute', {
+      ip: syncState.ip,
+      port: syncState.port,
+      username: syncState.username,
+      password: syncState.password,
+      directory: syncState.directory,
+      to_upload: syncState.toUpload,
+      to_download: syncState.toDownload,
+    });
+
+    $('#syncExecuteStatus').classList.add('hidden');
+    $('#syncExecuteDone').classList.remove('hidden');
+
+    if (res.code === 0) {
+      const upCount = syncState.toUpload.length;
+      const dlCount = syncState.toDownload.length;
+      $('#syncExecuteSummary').textContent = `已上传 ${upCount} 个文件，下载 ${dlCount} 个文件`;
+      showToast('同步完成');
+      loadLibrary();
+    } else {
+      $('#syncExecuteSummary').textContent = '同步失败: ' + (res.message || '未知错误');
+      showToast('同步失败: ' + (res.message || '未知错误'), 'warn');
+    }
+  } catch (e) {
+    $('#syncExecuteStatus').classList.add('hidden');
+    $('#syncExecuteDone').classList.remove('hidden');
+    $('#syncExecuteSummary').textContent = '同步失败: ' + e.message;
+    showToast('同步失败: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '执行同步';
+  }
+}
+
+function bindSyncEvents() {
+  $('#btnSync').addEventListener('click', openSyncModal);
+  $('#btnSyncClose').addEventListener('click', closeSyncModal);
+  $('#ovSync').addEventListener('click', (e) => { if (e.target === $('#ovSync')) closeSyncModal(); });
+
+  $('#btnSyncTest').addEventListener('click', testSyncConnection);
+  $('#btnSyncPrev').addEventListener('click', () => {
+    if (syncState.step > 1) {
+      syncState.step--;
+      renderSyncStep();
+    }
+  });
+  $('#btnSyncNext').addEventListener('click', () => {
+    syncState.step = 3;
+    doSyncCompare();
+  });
+  $('#btnSyncCompare').addEventListener('click', doSyncCompare);
+  $('#btnSyncExecute').addEventListener('click', doSyncExecute);
+  $('#btnSyncDone').addEventListener('click', () => {
+    closeSyncModal();
+    loadLibrary();
+  });
+
+  let syncDirFilterTimer;
+  $('#syncDirFilter').addEventListener('input', () => {
+    clearTimeout(syncDirFilterTimer);
+    syncDirFilterTimer = setTimeout(() => {
+      renderSyncDirList($('#syncDirFilter').value.trim());
+    }, 150);
+  });
+}
+
 function init() {
   initTheme();
   Player.init();
   bindEvents();
+  bindSyncEvents();
   loadLibrary();
 }
 

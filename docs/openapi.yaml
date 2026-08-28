@@ -349,6 +349,100 @@ paths:
           description: 获取成功
           content:
             text/plain: {}
+  /audio/sync/test-connection:
+    post:
+      operationId: SyncTestConnection
+      description: 测试FTP连接与凭据是否有效
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncTestConnectionRequest'
+      responses:
+        '200':
+          description: 测试成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncTestConnectionResponse'
+  /audio/sync/browse:
+    get:
+      operationId: SyncBrowse
+      description: 浏览FTP服务器目录
+      parameters:
+        - name: directory
+          in: query
+          schema:
+            type: string
+            default: /
+            description: FTP目录路径
+        - name: ip
+          in: query
+          schema:
+            type: string
+            default: 192.168.1.100
+            description: FTP服务器IP地址
+        - name: port
+          in: query
+          schema:
+            type: integer
+            default: 21
+            description: FTP服务器端口
+        - name: username
+          in: query
+          schema:
+            type: string
+            default: admin
+            description: FTP用户名
+        - name: password
+          in: query
+          schema:
+            type: string
+            default: 123456
+            description: FTP密码
+      responses:
+        '200':
+          description: 浏览成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncBrowseResponse'
+  /audio/sync/compare:
+    post:
+      operationId: SyncCompare
+      description: 对比本地音频文件与FTP服务器音频文件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncCompareRequest'
+      responses:
+        '200':
+          description: 对比成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncCompareResponse'
+  /audio/sync/execute:
+    post:
+      operationId: SyncExecute
+      description: 执行同步操作
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncExecuteRequest'
+      responses:
+        '200':
+          description: 执行成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncExecuteResponse'
+    
 
 components:
   schemas:
@@ -623,3 +717,133 @@ components:
             synced_lyrics:
               type: string
               description: 时间同步歌词（LRC格式，已转为简体中文）
+    SyncTestConnectionRequest:
+      type: object
+      properties:
+        ip:
+          type: string
+          description: FTP IP地址
+        port:
+          type: integer
+          description: FTP端口号
+        username:
+          type: string
+          description: FTP用户名
+        password:
+          type: string
+          description: FTP密码
+    SyncTestConnectionResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    SyncBrowseResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            dirs:
+              type: array
+              items:
+                type: string
+              description: FTP服务器目录列表
+    SyncCompareRequest:
+      type: object
+      properties:
+        ip:
+          type: string
+          description: FTP IP地址
+        port:
+          type: integer
+          description: FTP端口号
+        username:
+          type: string
+          description: FTP用户名
+        password:
+          type: string
+          description: FTP密码
+        directory:
+          type: string
+          description: FTP目录路径
+    SyncCompareResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            to_download:
+              type: array
+              items:
+                type: string
+              description: 待下载的音频文件列表
+            to_upload:
+              type: array
+              items:
+                type: string
+              description: 待上传的音频文件列表
+            conflict:
+              type: array
+              items:
+                type: string
+              description: 冲突的音频文件列表
+            unchanged:
+              type: integer
+              description: 未改变的音频文件数量
+    SyncExecuteRequest:
+      type: object
+      properties:
+        ip:
+          type: string
+          description: FTP IP地址
+        port:
+          type: integer
+          description: FTP端口号
+        username:
+          type: string
+          description: FTP用户名
+        password:
+          type: string
+          description: FTP密码
+        directory:
+          type: string
+          description: FTP目录路径
+        to_download:
+          type: array
+          items:
+            type: string
+          description: 待下载的音频文件列表
+        to_upload:
+          type: array
+          items:
+            type: string
+          description: 待上传的音频文件列表
+    SyncExecuteResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success

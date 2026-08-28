@@ -6,6 +6,7 @@ require (
 	github.com/getkin/kin-openapi v0.144.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
+	github.com/jlaffaye/ftp v0.2.4
 	github.com/oapi-codegen/runtime v1.6.0
 	go.senan.xyz/taglib v0.14.0
 	gorm.io/gorm v1.31.2

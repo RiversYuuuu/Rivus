@@ -142,3 +142,9 @@ func (r *Repository) HardDeleteAudioByID(audioID uint) error {
 func (r *Repository) RestoreAudioByID(audioID uint) error {
 	return r.DB.Unscoped().Model(&model.Audio{}).Where("ID = ?", audioID).Update("deleted_at", nil).Error
 }
+
+func (r *Repository) GetAllAudio() ([]model.Audio, error) {
+	var audios []model.Audio
+	err := r.DB.Find(&audios).Error
+	return audios, err
+}

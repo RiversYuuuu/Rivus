@@ -278,6 +278,116 @@ type SetConfigResponse struct {
 	Message string `json:"message"`
 }
 
+// SyncBrowseResponse defines model for SyncBrowseResponse.
+type SyncBrowseResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data *struct {
+		// Dirs FTP服务器目录列表
+		Dirs *[]string `json:"dirs,omitempty"`
+	} `json:"data,omitempty"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// SyncCompareRequest defines model for SyncCompareRequest.
+type SyncCompareRequest struct {
+	// Directory FTP目录路径
+	Directory *string `json:"directory,omitempty"`
+
+	// Ip FTP IP地址
+	Ip *string `json:"ip,omitempty"`
+
+	// Password FTP密码
+	Password *string `json:"password,omitempty"`
+
+	// Port FTP端口号
+	Port *int `json:"port,omitempty"`
+
+	// Username FTP用户名
+	Username *string `json:"username,omitempty"`
+}
+
+// SyncCompareResponse defines model for SyncCompareResponse.
+type SyncCompareResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data *struct {
+		// Conflict 冲突的音频文件列表
+		Conflict *[]string `json:"conflict,omitempty"`
+
+		// ToDownload 待下载的音频文件列表
+		ToDownload *[]string `json:"to_download,omitempty"`
+
+		// ToUpload 待上传的音频文件列表
+		ToUpload *[]string `json:"to_upload,omitempty"`
+
+		// Unchanged 未改变的音频文件数量
+		Unchanged *int `json:"unchanged,omitempty"`
+	} `json:"data,omitempty"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// SyncExecuteRequest defines model for SyncExecuteRequest.
+type SyncExecuteRequest struct {
+	// Directory FTP目录路径
+	Directory *string `json:"directory,omitempty"`
+
+	// Ip FTP IP地址
+	Ip *string `json:"ip,omitempty"`
+
+	// Password FTP密码
+	Password *string `json:"password,omitempty"`
+
+	// Port FTP端口号
+	Port *int `json:"port,omitempty"`
+
+	// ToDownload 待下载的音频文件列表
+	ToDownload *[]string `json:"to_download,omitempty"`
+
+	// ToUpload 待上传的音频文件列表
+	ToUpload *[]string `json:"to_upload,omitempty"`
+
+	// Username FTP用户名
+	Username *string `json:"username,omitempty"`
+}
+
+// SyncExecuteResponse defines model for SyncExecuteResponse.
+type SyncExecuteResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// SyncTestConnectionRequest defines model for SyncTestConnectionRequest.
+type SyncTestConnectionRequest struct {
+	// Ip FTP IP地址
+	Ip *string `json:"ip,omitempty"`
+
+	// Password FTP密码
+	Password *string `json:"password,omitempty"`
+
+	// Port FTP端口号
+	Port *int `json:"port,omitempty"`
+
+	// Username FTP用户名
+	Username *string `json:"username,omitempty"`
+}
+
+// SyncTestConnectionResponse defines model for SyncTestConnectionResponse.
+type SyncTestConnectionResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // UpdateAudioRequest defines model for UpdateAudioRequest.
 type UpdateAudioRequest struct {
 	// Album 专辑
@@ -373,6 +483,15 @@ type GetAudioSourceParams struct {
 	Id int `form:"id" json:"id"`
 }
 
+// SyncBrowseParams defines parameters for SyncBrowse.
+type SyncBrowseParams struct {
+	Directory *string `form:"directory,omitempty" json:"directory,omitempty"`
+	Ip        *string `form:"ip,omitempty" json:"ip,omitempty"`
+	Port      *int    `form:"port,omitempty" json:"port,omitempty"`
+	Username  *string `form:"username,omitempty" json:"username,omitempty"`
+	Password  *string `form:"password,omitempty" json:"password,omitempty"`
+}
+
 // UploadAudioMultipartBody defines parameters for UploadAudio.
 type UploadAudioMultipartBody struct {
 	// File 音频文件
@@ -390,6 +509,15 @@ type UploadLyricMultipartRequestBody UploadLyricMultipartBody
 
 // RestoreAudioJSONRequestBody defines body for RestoreAudio for application/json ContentType.
 type RestoreAudioJSONRequestBody = RestoreAudioRequest
+
+// SyncCompareJSONRequestBody defines body for SyncCompare for application/json ContentType.
+type SyncCompareJSONRequestBody = SyncCompareRequest
+
+// SyncExecuteJSONRequestBody defines body for SyncExecute for application/json ContentType.
+type SyncExecuteJSONRequestBody = SyncExecuteRequest
+
+// SyncTestConnectionJSONRequestBody defines body for SyncTestConnection for application/json ContentType.
+type SyncTestConnectionJSONRequestBody = SyncTestConnectionRequest
 
 // UpdateAudioJSONRequestBody defines body for UpdateAudio for application/json ContentType.
 type UpdateAudioJSONRequestBody = UpdateAudioRequest

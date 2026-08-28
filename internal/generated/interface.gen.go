@@ -43,6 +43,18 @@ type ServerInterface interface {
 	// GetAudioSource 获取音频流
 	// (GET /audio/source)
 	GetAudioSource(c *gin.Context, params GetAudioSourceParams)
+
+	// (GET /audio/sync/browse)
+	SyncBrowse(c *gin.Context, params SyncBrowseParams)
+
+	// (POST /audio/sync/compare)
+	SyncCompare(c *gin.Context)
+
+	// (POST /audio/sync/execute)
+	SyncExecute(c *gin.Context)
+
+	// (POST /audio/sync/test-connection)
+	SyncTestConnection(c *gin.Context)
 	// UpdateAudio 更新音频
 	// (POST /audio/update)
 	UpdateAudio(c *gin.Context)
@@ -347,6 +359,104 @@ func (siw *ServerInterfaceWrapper) GetAudioSource(c *gin.Context) {
 	siw.Handler.GetAudioSource(c, params)
 }
 
+// SyncBrowse operation middleware
+func (siw *ServerInterfaceWrapper) SyncBrowse(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SyncBrowseParams
+
+	// ------------- Optional query parameter "directory" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "directory", c.Request.URL.Query(), &params.Directory, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter directory: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "ip" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ip", c.Request.URL.Query(), &params.Ip, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter ip: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "port" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "port", c.Request.URL.Query(), &params.Port, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter port: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "username" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "username", c.Request.URL.Query(), &params.Username, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter username: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "password" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "password", c.Request.URL.Query(), &params.Password, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter password: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncBrowse(c, params)
+}
+
+// SyncCompare operation middleware
+func (siw *ServerInterfaceWrapper) SyncCompare(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncCompare(c)
+}
+
+// SyncExecute operation middleware
+func (siw *ServerInterfaceWrapper) SyncExecute(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncExecute(c)
+}
+
+// SyncTestConnection operation middleware
+func (siw *ServerInterfaceWrapper) SyncTestConnection(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncTestConnection(c)
+}
+
 // UpdateAudio operation middleware
 func (siw *ServerInterfaceWrapper) UpdateAudio(c *gin.Context) {
 
@@ -454,4 +564,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/audio/scrape", wrapper.ScrapeAudio)
 	router.GET(options.BaseURL+"/audio/lyric/fetch", wrapper.FetchLyric)
 	router.GET(options.BaseURL+"/audio/lyric/source", wrapper.GetLyricSource)
+	router.POST(options.BaseURL+"/audio/sync/test-connection", wrapper.SyncTestConnection)
+	router.GET(options.BaseURL+"/audio/sync/browse", wrapper.SyncBrowse)
+	router.POST(options.BaseURL+"/audio/sync/compare", wrapper.SyncCompare)
+	router.POST(options.BaseURL+"/audio/sync/execute", wrapper.SyncExecute)
 }
