@@ -61,6 +61,9 @@ type ServerInterface interface {
 	// UploadAudio 上传音频文件
 	// (POST /audio/upload)
 	UploadAudio(c *gin.Context)
+	// Browse 浏览本地目录
+	// (GET /browse)
+	Browse(c *gin.Context, params BrowseParams)
 	// GetConfig 获取配置接口
 	// (GET /config)
 	GetConfig(c *gin.Context)
@@ -483,6 +486,33 @@ func (siw *ServerInterfaceWrapper) UploadAudio(c *gin.Context) {
 	siw.Handler.UploadAudio(c)
 }
 
+// Browse operation middleware
+func (siw *ServerInterfaceWrapper) Browse(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params BrowseParams
+
+	// ------------- Optional query parameter "directory" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "directory", c.Request.URL.Query(), &params.Directory, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter directory: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.Browse(c, params)
+}
+
 // GetConfig operation middleware
 func (siw *ServerInterfaceWrapper) GetConfig(c *gin.Context) {
 
@@ -552,6 +582,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.GET(options.BaseURL+"/config", wrapper.GetConfig)
 	router.POST(options.BaseURL+"/config", wrapper.SetConfig)
+	router.GET(options.BaseURL+"/browse", wrapper.Browse)
 	router.GET(options.BaseURL+"/audio/scan", wrapper.ScanAudio)
 	router.GET(options.BaseURL+"/audio/search", wrapper.SearchAudio)
 	router.DELETE(options.BaseURL+"/audio/delete", wrapper.DeleteAudio)

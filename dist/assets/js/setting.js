@@ -73,6 +73,8 @@ function initSetup() {
   btnSave.addEventListener('click', saveConfig);
   btnScan.addEventListener('click', startScan);
 
+  initBrowse(dirInput, checkDir);
+
   /* ----- auto-load existing config on page load ----- */
   (async () => {
     try {
@@ -206,6 +208,177 @@ async function startScan() {
     btnScan.disabled = false;
     btnScan.innerHTML = btnOrigHTML;
   }
+}
+
+function initBrowse(dirInput, checkDir) {
+  const overlay = $('#browseOverlay');
+  const browseList = $('#browseList');
+  const browseBreadcrumb = $('#browseBreadcrumb');
+  const browseLoading = $('#browseLoading');
+  const browseFilter = $('#browseFilter');
+  const btnBrowse = $('#btnBrowse');
+  const btnBrowseCancel = $('#btnBrowseCancel');
+  const btnBrowseSelect = $('#btnBrowseSelect');
+
+  let currentDir = '';
+  let selectedDir = '';
+  let separator = '/';
+  let allDirs = [];
+
+  function showOverlay() {
+    overlay.classList.add('show');
+  }
+
+  function hideOverlay() {
+    overlay.classList.remove('show');
+  }
+
+  function dirBasename(p) {
+    if (!p) return '';
+    p = p.replace(/[/\\]+$/, '');
+    const parts = p.split(/[/\\]/);
+    return parts[parts.length - 1] || p;
+  }
+
+  function buildBreadcrumb(dir) {
+    browseBreadcrumb.innerHTML = '';
+
+    if (!dir) return;
+
+    const sep = separator === '\\' ? '\\' : '/';
+    let isWindowsDrive = /^[A-Za-z]:\\?$/.test(dir);
+    let segments;
+
+    if (isWindowsDrive) {
+      segments = [dir.replace(/\\$/, '')];
+    } else {
+      let clean = dir;
+      if (clean.startsWith(sep)) clean = clean.slice(sep.length);
+      if (clean.endsWith(sep)) clean = clean.slice(0, -sep.length);
+      segments = clean.split(sep).filter(Boolean);
+    }
+
+    let pathSoFar = '';
+    segments.forEach((seg, i) => {
+      if (i > 0) {
+        const sepEl = document.createElement('span');
+        sepEl.className = 'browse-sep';
+        sepEl.textContent = sep;
+        browseBreadcrumb.appendChild(sepEl);
+      }
+
+      if (!pathSoFar && seg.includes(':')) {
+        pathSoFar = seg + sep;
+      } else if (!pathSoFar) {
+        pathSoFar = sep + seg;
+      } else if (pathSoFar.endsWith(sep)) {
+        pathSoFar = pathSoFar + seg;
+      } else {
+        pathSoFar = pathSoFar + sep + seg;
+      }
+
+      const isLast = i === segments.length - 1;
+      const crumb = document.createElement('span');
+      crumb.className = 'browse-crumb' + (isLast ? ' current' : '');
+      crumb.textContent = seg;
+      if (!isLast) {
+        const targetDir = pathSoFar;
+        crumb.addEventListener('click', () => loadDir(targetDir));
+      } else {
+        crumb.style.cursor = 'default';
+      }
+      browseBreadcrumb.appendChild(crumb);
+    });
+  }
+
+  function renderList(keyword) {
+    browseList.innerHTML = '';
+    const kw = (keyword || '').toLowerCase();
+    const filtered = kw ? allDirs.filter((d) => dirBasename(d).toLowerCase().includes(kw)) : allDirs;
+
+    if (filtered.length === 0) {
+      browseList.innerHTML = '<div class="browse-empty">' + (kw ? '没有匹配的目录' : '此目录下没有子目录') + '</div>';
+      return;
+    }
+
+    filtered.forEach((d) => {
+      const item = document.createElement('div');
+      item.className = 'browse-item';
+      item.dataset.path = d;
+      item.innerHTML =
+        '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' +
+        '<span class="browse-item-name">' + esc(dirBasename(d)) + '</span>';
+      item.addEventListener('click', () => {
+        loadDir(d);
+      });
+      browseList.appendChild(item);
+    });
+  }
+
+  async function loadDir(dir) {
+    browseLoading.classList.remove('hidden');
+    browseList.innerHTML = '';
+    browseFilter.value = '';
+    btnBrowseSelect.disabled = true;
+
+    try {
+      const params = {};
+      if (dir) params.directory = dir;
+      const res = await apiGet('/browse', params);
+
+      if (res.code === 0 && res.data) {
+        separator = res.data.separator || '/';
+        currentDir = dir;
+        selectedDir = dir;
+        buildBreadcrumb(dir);
+
+        const dirs = res.data.dirs || [];
+        browseLoading.classList.add('hidden');
+
+        dirs.sort((a, b) => {
+          const na = dirBasename(a).toLowerCase();
+          const nb = dirBasename(b).toLowerCase();
+          return na.localeCompare(nb);
+        });
+        allDirs = dirs;
+        renderList('');
+
+        btnBrowseSelect.disabled = !dir;
+      } else {
+        browseLoading.classList.add('hidden');
+        browseList.innerHTML = '<div class="browse-empty">无法读取目录</div>';
+      }
+    } catch (e) {
+      browseLoading.classList.add('hidden');
+      browseList.innerHTML = '<div class="browse-empty">连接失败: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  browseFilter.addEventListener('input', () => {
+    renderList(browseFilter.value.trim());
+  });
+
+  btnBrowse.addEventListener('click', () => {
+    const existingDir = dirInput.value.trim();
+    selectedDir = '';
+    loadDir(existingDir || '');
+    showOverlay();
+  });
+
+  btnBrowseCancel.addEventListener('click', hideOverlay);
+
+  btnBrowseSelect.addEventListener('click', () => {
+    const dir = selectedDir || currentDir;
+    if (dir) {
+      dirInput.value = dir;
+      checkDir(dir);
+    }
+    hideOverlay();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) hideOverlay();
+  });
 }
 
 function bindEvents() {

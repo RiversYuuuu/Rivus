@@ -48,6 +48,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SetConfigResponse'
+  /browse:
+    get:
+      operationId: Browse
+      summary: 浏览本地目录
+      description: 用于浏览本地目录
+      parameters:
+        - name: directory
+          in: query
+          schema:
+            type: string
+            default: /
+            description: 本地目录路径，默认根目录
+      responses:
+        '200':
+          description: 浏览成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowseResponse'
   /audio/scan:
     get:
       operationId: ScanAudio
@@ -492,6 +511,27 @@ components:
         data:
           type: object
           $ref: '#/components/schemas/Config'
+    BrowseResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            separator:
+              type: string
+              description:  分隔符
+            dirs:
+              type: array
+              items:
+                type: string
+              description: 本地目录列表
     ScanAudioResponse:
       type: object
       required: [code, message]

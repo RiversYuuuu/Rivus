@@ -56,6 +56,10 @@
               <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
               <input id="dirInput" type="text" placeholder="例如 C:\Users\Public\Music" autocomplete="off">
             </div>
+            <button id="btnBrowse" class="btn btn-outline sm" type="button">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m9 13 3 3 3-3"/></svg>
+              浏览
+            </button>
           </div>
         </div>
 
@@ -98,6 +102,34 @@
     </main>
   </div>
 </section>
+
+<div id="browseOverlay" class="overlay">
+  <div class="modal browse-modal">
+    <div class="modal-head">
+      <div class="m-ic edit">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      </div>
+      <div>
+        <h3>选择音频存储目录</h3>
+        <div class="browse-breadcrumb" id="browseBreadcrumb"></div>
+      </div>
+    </div>
+    <div class="modal-body browse-body">
+      <div class="browse-filter">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="browseFilter" type="text" placeholder="搜索目录名…" autocomplete="off">
+      </div>
+      <div id="browseLoading" class="browse-loading hidden">
+        <span class="spin"></span> 加载中…
+      </div>
+      <div id="browseList" class="browse-list"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="btnBrowseCancel" class="btn btn-ghost" type="button">取消</button>
+      <button id="btnBrowseSelect" class="btn btn-primary" type="button" disabled>选择此目录</button>
+    </div>
+  </div>
+</div>
 
 <div id="toasts"></div>
 

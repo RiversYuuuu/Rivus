@@ -124,6 +124,22 @@ type AudioItem struct {
 	UpdateTime *string `json:"update_time,omitempty"`
 }
 
+// BrowseResponse defines model for BrowseResponse.
+type BrowseResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data *struct {
+		// Dirs 本地目录列表
+		Dirs *[]string `json:"dirs,omitempty"`
+
+		// Separator 分隔符
+		Separator *string `json:"separator,omitempty"`
+	} `json:"data,omitempty"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // Config defines model for Config.
 type Config struct {
 	// AcoustidApiKey AcoustID API Key
@@ -496,6 +512,11 @@ type SyncBrowseParams struct {
 type UploadAudioMultipartBody struct {
 	// File 音频文件
 	File *openapi_types.File `json:"file,omitempty"`
+}
+
+// BrowseParams defines parameters for Browse.
+type BrowseParams struct {
+	Directory *string `form:"directory,omitempty" json:"directory,omitempty"`
 }
 
 // DeleteAudioJSONRequestBody defines body for DeleteAudio for application/json ContentType.
