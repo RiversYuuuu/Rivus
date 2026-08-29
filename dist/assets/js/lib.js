@@ -745,6 +745,9 @@ const syncState = {
   allDirs: [],
   toUpload: [],
   toDownload: [],
+  selectedUpload: new Set(),
+  selectedDownload: new Set(),
+  activeTab: 'upload',
 };
 
 function openSyncModal() {
@@ -754,6 +757,9 @@ function openSyncModal() {
   syncState.dirHistory = ['/'];
   syncState.toUpload = [];
   syncState.toDownload = [];
+  syncState.selectedUpload = new Set();
+  syncState.selectedDownload = new Set();
+  syncState.activeTab = 'upload';
   $('#ovSync').classList.add('show');
   $('#syncIp').value = '';
   $('#syncPort').value = '2121';
@@ -1002,24 +1008,18 @@ async function doSyncCompare() {
 
       syncState.toUpload = toUpload;
       syncState.toDownload = toDownload;
+      syncState.selectedUpload = new Set();
+      syncState.selectedDownload = new Set();
+      syncState.activeTab = 'upload';
 
       $('#syncUploadCount').textContent = toUpload.length;
       $('#syncDownloadCount').textContent = toDownload.length;
       $('#syncUnchangedCount').textContent = unchanged;
 
-      if (toUpload.length > 0) {
-        $('#syncUploadList').innerHTML = '<b>待上传文件</b>' + toUpload.map(f => '<div>' + esc(f) + '</div>').join('');
-        $('#syncUploadList').classList.remove('hidden');
-      } else {
-        $('#syncUploadList').innerHTML = '';
-      }
-
-      if (toDownload.length > 0) {
-        $('#syncDownloadList').innerHTML = '<b>待下载文件</b>' + toDownload.map(f => '<div>' + esc(f) + '</div>').join('');
-        $('#syncDownloadList').classList.remove('hidden');
-      } else {
-        $('#syncDownloadList').innerHTML = '';
-      }
+      syncState.activeTab = 'upload';
+      updateSyncDir();
+      renderSyncTable();
+      $('#syncDirToggle').onclick = toggleSyncDirection;
 
       $('#syncCompareResult').classList.remove('hidden');
 
@@ -1039,7 +1039,113 @@ async function doSyncCompare() {
   }
 }
 
+function toggleSyncDirection() {
+  syncState.activeTab = syncState.activeTab === 'upload' ? 'download' : 'upload';
+  updateSyncDir();
+  renderSyncTable();
+}
+
+function updateSyncDir() {
+  const isUpload = syncState.activeTab === 'upload';
+  const left = $('#syncDirLeft');
+  const right = $('#syncDirRight');
+
+  const pcSvg = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+  const serverSvg = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
+
+  left.innerHTML = (isUpload ? pcSvg : serverSvg) + (isUpload ? '本地' : 'FTP服务器');
+  right.innerHTML = (isUpload ? serverSvg : pcSvg) + (isUpload ? 'FTP服务器' : '本地');
+  left.classList.add('active');
+  right.classList.remove('active');
+}
+
+function renderSyncTable() {
+  const type = syncState.activeTab;
+  const files = type === 'upload' ? syncState.toUpload : syncState.toDownload;
+  const selectedSet = type === 'upload' ? syncState.selectedUpload : syncState.selectedDownload;
+  const items = $('#syncFileItems');
+  const checkAllBtn = $('#syncCheckAll');
+
+  if (files.length === 0) {
+    items.innerHTML = '<div class="sync-file-empty">暂无文件</div>';
+    checkAllBtn.dataset.state = 'none';
+    $('#syncSelectedHint').innerHTML = '已选 <b>0</b> / <b>0</b>';
+    return;
+  }
+
+  items.innerHTML = files.map((f) => {
+    const displayName = f.split(/[/\\]/).pop();
+    const isChecked = selectedSet.has(f);
+    return `
+      <label class="sync-file-item">
+        <button class="sync-row-check${isChecked ? ' checked' : ''}" data-path="${esc(f)}" type="button">
+          <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
+        </button>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <span class="sync-file-name" title="${esc(f)}">${esc(displayName)}</span>
+      </label>
+    `;
+  }).join('');
+
+  updateSyncCheckAllState();
+
+  checkAllBtn.onclick = function () {
+    const state = this.dataset.state;
+    if (state === 'all') {
+      selectedSet.clear();
+    } else {
+      selectedSet.clear();
+      files.forEach(f => selectedSet.add(f));
+    }
+    items.querySelectorAll('.sync-row-check').forEach(btn => {
+      btn.classList.toggle('checked', selectedSet.has(btn.dataset.path));
+    });
+    updateSyncCheckAllState();
+  };
+
+  items.querySelectorAll('.sync-row-check').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const path = btn.dataset.path;
+      if (selectedSet.has(path)) {
+        selectedSet.delete(path);
+        btn.classList.remove('checked');
+      } else {
+        selectedSet.add(path);
+        btn.classList.add('checked');
+      }
+      updateSyncCheckAllState();
+    });
+  });
+}
+
+function updateSyncCheckAllState() {
+  const type = syncState.activeTab;
+  const files = type === 'upload' ? syncState.toUpload : syncState.toDownload;
+  const selectedSet = type === 'upload' ? syncState.selectedUpload : syncState.selectedDownload;
+  const checkAllBtn = $('#syncCheckAll');
+  const hint = $('#syncSelectedHint');
+  const checkedCount = selectedSet.size;
+
+  if (checkedCount === 0) {
+    checkAllBtn.dataset.state = 'none';
+  } else if (checkedCount === files.length) {
+    checkAllBtn.dataset.state = 'all';
+  } else {
+    checkAllBtn.dataset.state = 'some';
+  }
+  hint.innerHTML = '已选 <b>' + checkedCount + '</b> / <b>' + files.length + '</b>';
+}
+
 async function doSyncExecute() {
+  const selectedUpload = Array.from(syncState.selectedUpload);
+  const selectedDownload = Array.from(syncState.selectedDownload);
+
+  if (selectedUpload.length === 0 && selectedDownload.length === 0) {
+    showToast('请至少选择一首歌曲进行同步', 'warn');
+    return;
+  }
+
   const btn = $('#btnSyncExecute');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin" style="width:14px;height:14px;border-width:2px"></span> 执行中…';
@@ -1056,16 +1162,16 @@ async function doSyncExecute() {
       username: syncState.username,
       password: syncState.password,
       directory: syncState.directory,
-      to_upload: syncState.toUpload,
-      to_download: syncState.toDownload,
+      to_upload: selectedUpload,
+      to_download: selectedDownload,
     });
 
     $('#syncExecuteStatus').classList.add('hidden');
     $('#syncExecuteDone').classList.remove('hidden');
 
     if (res.code === 0) {
-      const upCount = syncState.toUpload.length;
-      const dlCount = syncState.toDownload.length;
+      const upCount = selectedUpload.length;
+      const dlCount = selectedDownload.length;
       $('#syncExecuteSummary').textContent = `已上传 ${upCount} 个文件，下载 ${dlCount} 个文件`;
       showToast('同步完成');
       loadLibrary();

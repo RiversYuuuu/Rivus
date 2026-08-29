@@ -341,23 +341,34 @@
           <span class="spin"></span> 正在对比...
         </div>
         <div class="sync-compare-result hidden" id="syncCompareResult">
-          <div class="sync-compare-stats">
-            <div class="sync-stat sync-stat-upload">
-              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <div><b id="syncUploadCount">0</b><span>待上传（本地→远程）</span></div>
-            </div>
-            <div class="sync-stat sync-stat-download">
-              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <div><b id="syncDownloadCount">0</b><span>待下载（远程→本地）</span></div>
-            </div>
-            <div class="sync-stat sync-stat-same">
-              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m8 12 3 3 6-6"/></svg>
-              <div><b id="syncUnchangedCount">0</b><span>未改变</span></div>
-            </div>
+          <div class="sync-dir-bar">
+            <span class="sync-dir-side active" id="syncDirLeft">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              本地
+            </span>
+            <button class="sync-dir-toggle" id="syncDirToggle" title="切换方向">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7.5 21 3 16.5 7.5 12"/><line x1="3" y1="16.5" x2="16.5" y2="16.5"/><polyline points="16.5 3 21 7.5 16.5 12"/><line x1="21" y1="7.5" x2="7.5" y2="7.5"/></svg>
+            </button>
+            <span class="sync-dir-side" id="syncDirRight">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              FTP服务器
+            </span>
           </div>
-          <div class="sync-file-lists">
-            <div class="sync-file-group" id="syncUploadList"></div>
-            <div class="sync-file-group" id="syncDownloadList"></div>
+          <div class="sync-file-table-wrap">
+            <div class="sync-file-table-head">
+              <button class="sync-check-btn" id="syncCheckAll" data-state="none" title="全选">
+                <svg class="ic ic-check-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+                <svg class="ic ic-check-some" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
+                <svg class="ic ic-check-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 11 11 13 15 9"/></svg>
+              </button>
+              <div class="sync-stats-pills">
+                <span class="sync-pill upload">↑ <b id="syncUploadCount">0</b> 上传</span>
+                <span class="sync-pill download">↓ <b id="syncDownloadCount">0</b> 下载</span>
+                <span class="sync-pill same">✓ <b id="syncUnchangedCount">0</b> 未变</span>
+              </div>
+              <span class="sync-selected-hint" id="syncSelectedHint">已选 <b>0</b> / <b>0</b></span>
+            </div>
+            <div class="sync-file-items" id="syncFileItems"></div>
           </div>
         </div>
       </div>
