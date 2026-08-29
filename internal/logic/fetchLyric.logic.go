@@ -25,9 +25,14 @@ func (l *FetchLyricLogic) FetchLyric(params generated.FetchLyricParams) (*genera
 
 	// 从LRCLIB拉取歌词
 	syncedLyrics, _, err := tool.GetLyricsFromLRCLIB(audio.Artist, audio.Title, audio.Album, audio.Duration)
-	if err != nil {
-		l.Logger.Error("GetLyricsFromLRCLIB failed", "err", err, "id", params.Id)
-		return nil, err
+	if err != nil || syncedLyrics == "" {
+		l.Logger.Warn("GetLyricsFromLRCLIB failed", "err", err, "id", params.Id)
+		// 尝试不带专辑名称和时长拉取歌词
+		syncedLyrics, _, err = tool.GetLyricsFromLRCLIB(audio.Artist, audio.Title, "", 0)
+		if err != nil {
+			l.Logger.Error("GetLyricsFromLRCLIB failed with empty album name and duration", "err", err, "id", params.Id)
+			return nil, err
+		}
 	}
 
 	return &generated.FetchLyricResponse{

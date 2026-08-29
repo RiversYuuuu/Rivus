@@ -197,6 +197,62 @@ img.cover-err{visibility:hidden}
 .sync-stat-upload b{color:var(--amber)}
 .sync-stat-download{background:color-mix(in srgb,var(--blue) 6%,transparent);border-color:color-mix(in srgb,var(--blue) 20%,transparent)}
 .sync-stat-download .ic{color:var(--blue)}
+.mode-seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;margin-left:auto}
+.mode-seg button{border:none;background:none;color:var(--ink3);font-size:12.5px;padding:7px 13px;border-radius:7px;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.mode-seg button .ic{width:14px;height:14px}
+.mode-seg button:hover{color:var(--ink)}
+.mode-seg button.on{background:var(--amber);color:var(--btn-ink);font-weight:700}
+.batch-bar{display:flex;align-items:center;gap:12px;padding:10px 18px;background:color-mix(in srgb,var(--amber) 6%,transparent);border:1px solid color-mix(in srgb,var(--amber) 25%,transparent);border-radius:12px;margin-bottom:16px;animation:screenIn .3s ease both}
+.batch-left{display:flex;align-items:center;gap:8px}
+.batch-hint{font-size:11px;color:var(--ink3);background:var(--bg3);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.batch-check-btn,.th-check-btn{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border:none;background:none;color:var(--ink3);cursor:pointer;transition:color .18s;position:relative;padding:0}
+.batch-check-btn:hover,.th-check-btn:hover{color:var(--amber)}
+.batch-check-btn .ic,.th-check-btn .ic{width:20px;height:20px}
+.batch-check-btn .ic-check-none,.batch-check-btn .ic-check-some,.batch-check-btn .ic-check-all,.th-check-btn .ic-check-none,.th-check-btn .ic-check-some,.th-check-btn .ic-check-all{position:absolute;transition:opacity .2s,transform .2s}
+.batch-check-btn .ic-check-some,.batch-check-btn .ic-check-all,.th-check-btn .ic-check-some,.th-check-btn .ic-check-all{opacity:0;transform:scale(.5)}
+.batch-check-btn[data-state="some"] .ic-check-none,.th-check-btn[data-state="some"] .ic-check-none{opacity:0;transform:scale(.5)}
+.batch-check-btn[data-state="some"] .ic-check-some,.th-check-btn[data-state="some"] .ic-check-some{opacity:1;transform:scale(1)}
+.batch-check-btn[data-state="some"] .ic-check-all,.th-check-btn[data-state="some"] .ic-check-all{opacity:0;transform:scale(.5)}
+.batch-check-btn[data-state="all"] .ic-check-none,.th-check-btn[data-state="all"] .ic-check-none{opacity:0;transform:scale(.5)}
+.batch-check-btn[data-state="all"] .ic-check-some,.th-check-btn[data-state="all"] .ic-check-some{opacity:0;transform:scale(.5)}
+.batch-check-btn[data-state="all"] .ic-check-all,.th-check-btn[data-state="all"] .ic-check-all{opacity:1;transform:scale(1)}
+.batch-check-btn[data-state="some"],.batch-check-btn[data-state="all"],.th-check-btn[data-state="some"],.th-check-btn[data-state="all"]{color:var(--amber)}
+.batch-count{font-size:13px;color:var(--ink2);font-weight:600;white-space:nowrap}
+.batch-count b{color:var(--amber)}
+.batch-actions{display:flex;gap:8px;flex:1;justify-content:center;flex-wrap:wrap}
+.c-chk{width:36px;text-align:center}
+td.c-chk-cell{width:36px;text-align:center;vertical-align:middle}
+.row-check-cell{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--line2);background:none;border-radius:4px;color:transparent;cursor:pointer;transition:.15s;padding:0}
+.row-check-cell:hover{border-color:var(--amber)}
+.row-check-cell.checked{background:var(--amber);border-color:var(--amber);color:#fff}
+.row-check-cell .ic{width:12px;height:12px}
+.batch-lyric-modal{width:min(540px,100%)}
+.batch-lyric-body{min-height:180px}
+.bl-progress{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.bl-progress-bar{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.bl-progress-fill{height:100%;background:var(--amber);border-radius:3px;transition:width .3s ease;width:0}
+.bl-progress-text{font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:11px;color:var(--ink3);white-space:nowrap}
+.bl-song-info{margin-bottom:14px}
+.bl-song-title{font-weight:700;font-size:15px;color:var(--ink)}
+.bl-song-artist{font-size:12px;color:var(--ink3);margin-top:3px}
+.bl-options{min-height:80px}
+.bl-loading{text-align:center;padding:24px;color:var(--ink3);font-size:13px}
+.bl-no-result{text-align:center;padding:20px;color:var(--ink3)}
+.bl-no-result p{font-size:13px;margin-top:8px}
+.bl-preview-label{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.1em;margin-bottom:6px}
+.bl-preview-text{display:block;width:100%;box-sizing:border-box;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:12px 13px;font-size:12.5px;color:var(--ink);height:180px;resize:vertical;overflow-y:auto;white-space:pre-wrap;line-height:1.7;font-family:'JetBrains Mono','Cascadia Code','Consolas',monospace}
+.bl-skip-note{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--teal);padding:8px 12px;background:color-mix(in srgb,var(--teal) 8%,transparent);border:1px solid color-mix(in srgb,var(--teal) 25%,transparent);border-radius:8px;margin-top:8px}
+.batch-result-stats{display:flex;gap:12px;flex-wrap:wrap}
+.batch-result-stat{flex:1;min-width:100px;display:flex;flex-direction:column;align-items:center;padding:16px;border-radius:10px;border:1px solid var(--line);gap:4px}
+.batch-result-stat b{font-size:28px;font-family:'JetBrains Mono','Cascadia Code',monospace}
+.batch-result-stat span{font-size:11px;color:var(--ink3)}
+.batch-result-stat.s-ok{background:color-mix(in srgb,var(--teal) 6%,transparent);border-color:color-mix(in srgb,var(--teal) 20%,transparent)}
+.batch-result-stat.s-ok b{color:var(--teal)}
+.batch-result-stat.s-skip{background:color-mix(in srgb,var(--amber) 6%,transparent);border-color:color-mix(in srgb,var(--amber) 20%,transparent)}
+.batch-result-stat.s-skip b{color:var(--amber)}
+.batch-result-stat.s-fail{background:color-mix(in srgb,var(--rose) 6%,transparent);border-color:color-mix(in srgb,var(--rose) 20%,transparent)}
+.batch-result-stat.s-fail b{color:var(--rose)}
+
 .sync-stat-download b{color:var(--blue)}
 .sync-stat-same{background:color-mix(in srgb,var(--teal) 6%,transparent);border-color:color-mix(in srgb,var(--teal) 20%,transparent)}
 .sync-stat-same .ic{color:var(--teal)}

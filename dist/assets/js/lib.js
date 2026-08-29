@@ -39,6 +39,7 @@ async function loadLibrary() {
 
     renderTable(list, pag, tab === 'bin');
 
+    Batch.refreshAfterLoad(pag.total || 0);
     updateStats();
     updatePager(pag);
     if (tab !== 'bin') {
@@ -76,7 +77,7 @@ function renderTable(list, pag, isBin = false) {
     const id = a.id || 0;
 
     return `
-    <tr class="song-row" data-id="${id}" style="--d:${i * 30}">
+    <tr class="song-row" data-id="${id}" data-lyric="${a.lyric_path ? '1' : '0'}" data-ext="${a.file_ext || ''}" style="--d:${i * 30}">
       <td class="c-idx"><span class="idx">${idx}</span><button class="idx-play" data-action="play" data-id="${id}" title="播放"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></button><span class="play-bars"><span></span><span></span><span></span></span></td>
       <td>
         <div class="tt-cell">
@@ -104,7 +105,7 @@ function renderTable(list, pag, isBin = false) {
           <div class="act-dropdown">
             <button class="act-btn a-edit" data-id="${id}" title="编辑"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
             <div class="dropdown-menu">
-              <button class="dropdown-item" data-action="upload-lyric" data-id="${id}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>上传歌词</button>
+              <button class="dropdown-item" data-action="upload-lyric" data-id="${id}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>歌词管理</button>
               <button class="dropdown-item" data-action="edit" data-id="${id}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>编辑元信息</button>
             </div>
           </div>
@@ -400,34 +401,36 @@ function uploadLyric(id) {
 }
 
 let lyricModalId = null;
-let fetchedLyricText = null;
 
 function openLyricModal(id) {
   lyricModalId = id;
-  fetchedLyricText = null;
   const row = document.querySelector(`.song-row[data-id="${id}"]`);
   const title = row ? (row.querySelector('.tt')?.textContent || '') : '';
+  const hasLyric = row ? row.dataset.lyric === '1' : false;
   $('#lyricSongName').textContent = title || `ID: ${id}`;
-  showLyricActions();
+  showLyricActions(hasLyric);
   $('#ovLyric').classList.add('show');
 }
 
 function closeLyricModal() {
   $('#ovLyric').classList.remove('show');
   lyricModalId = null;
-  fetchedLyricText = null;
 }
 
-function showLyricActions() {
+function showLyricActions(hasLyric) {
   $('#lyricActions').classList.remove('hidden');
   $('#lyricPreview').classList.add('hidden');
   $('#btnLyricConfirm').classList.add('hidden');
+  if (hasLyric) {
+    $('#btnLyricEdit').classList.remove('hidden');
+  } else {
+    $('#btnLyricEdit').classList.add('hidden');
+  }
 }
 
 function showLyricPreview(text) {
-  fetchedLyricText = text;
   $('#lyricActions').classList.add('hidden');
-  $('#lyricPreviewText').textContent = text;
+  $('#lyricPreviewText').value = text;
   $('#lyricPreview').classList.remove('hidden');
   $('#btnLyricConfirm').classList.remove('hidden');
 }
@@ -477,13 +480,35 @@ async function doFetchLyric(id) {
   }
 }
 
+async function doEditLyric(id) {
+  const btn = $('#btnLyricEdit');
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin" style="width:16px;height:16px;border-width:2px"></span> 加载中…';
+  try {
+    const res = await fetch(`/audio/lyric/source?id=${id}`);
+    if (!res.ok) {
+      showToast('加载歌词失败', 'warn');
+      return;
+    }
+    const text = await res.text();
+    showLyricPreview(text);
+  } catch (e) {
+    showToast('加载歌词失败: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+}
+
 async function doConfirmLyric(id) {
-  if (!fetchedLyricText) return;
+  const editedText = $('#lyricPreviewText').value.trim();
+  if (!editedText) return;
   const btn = $('#btnLyricConfirm');
   btn.disabled = true;
   btn.textContent = '上传中…';
   try {
-    const blob = new Blob([fetchedLyricText], { type: 'text/plain' });
+    const blob = new Blob([editedText], { type: 'text/plain' });
     const file = new File([blob], 'lyric.lrc', { type: 'text/plain' });
     const fd = new FormData();
     fd.append('id', id);
@@ -507,6 +532,10 @@ document.addEventListener('keydown', (e) => {
     closeLyricModal();
     closeConfirm();
     closeSyncModal();
+    closeBatchResult();
+    if ($('#ovBatchLyric').classList.contains('show')) {
+      BatchLyricSearch._cancelAll();
+    }
   }
   if (e.key === '/' && document.activeElement === document.body) {
     e.preventDefault();
@@ -646,6 +675,7 @@ function bindEvents() {
   $('#ovLyric').addEventListener('click', (e) => { if (e.target === $('#ovLyric')) closeLyricModal(); });
   $('#btnLyricUpload').addEventListener('click', () => { if (lyricModalId) doUploadLyric(lyricModalId); });
   $('#btnLyricFetch').addEventListener('click', () => { if (lyricModalId) doFetchLyric(lyricModalId); });
+  $('#btnLyricEdit').addEventListener('click', () => { if (lyricModalId) doEditLyric(lyricModalId); });
   $('#btnLyricConfirm').addEventListener('click', () => { if (lyricModalId) doConfirmLyric(lyricModalId); });
 
   $$('.tab').forEach((tab) => {
@@ -654,6 +684,7 @@ function bindEvents() {
       tab.classList.add('on');
       state.currentTab = tab.dataset.tab;
       state.page = 1;
+      if (Batch.active) Batch.exit();
       loadLibrary();
     });
   });
@@ -1085,11 +1116,573 @@ function bindSyncEvents() {
   });
 }
 
+/* ---------- batch operations ---------- */
+const Batch = {
+  active: false,
+  selected: new Set(),
+  allItems: [],
+  allSongsMap: new Map(),
+  totalCount: 0,
+
+  enter() {
+    this.active = true;
+    this.selected.clear();
+    this.allItems = [];
+    this.allSongsMap.clear();
+    this.totalCount = 0;
+    $('#batchBar').classList.remove('hidden');
+    $('#thChk').classList.remove('hidden');
+    $$('#modeSeg button').forEach((b) => {
+      b.classList.toggle('on', b.dataset.mode === 'batch');
+    });
+    this._collectItems();
+    this._renderCheckboxes();
+    this._updateUI();
+  },
+
+  exit() {
+    this.active = false;
+    this.selected.clear();
+    this.allItems = [];
+    this.allSongsMap.clear();
+    this.totalCount = 0;
+    $('#batchBar').classList.add('hidden');
+    $('#thChk').classList.add('hidden');
+    $$('.row-check-cell').forEach((cb) => {
+      cb.classList.remove('checked');
+      cb.closest('td')?.remove();
+    });
+    this._updateCheckAllBtn(0, 0);
+    $$('#modeSeg button').forEach((b) => {
+      b.classList.toggle('on', b.dataset.mode === 'play');
+    });
+  },
+
+  toggleItem(id) {
+    if (this.selected.has(id)) {
+      this.selected.delete(id);
+    } else {
+      this.selected.add(id);
+    }
+    this._updateUI();
+  },
+
+  togglePageAll() {
+    const pageAllSelected = this.allItems.every((item) => this.selected.has(item.id));
+    if (pageAllSelected) {
+      this.allItems.forEach((item) => this.selected.delete(item.id));
+    } else {
+      this.allItems.forEach((item) => this.selected.add(item.id));
+    }
+    this._updateUI();
+  },
+
+  async toggleAll() {
+    if (this.selected.size > 0 && this.selected.size === this.totalCount && this.totalCount > 0) {
+      this.selected.clear();
+      this._updateUI();
+      return;
+    }
+
+    const btn = $('#btnBatchCheckAll');
+    btn.disabled = true;
+
+    try {
+      const searchParams = {};
+      if (state.searchTerm) {
+        if (state.scope === 'all' || state.scope === 'title') searchParams.title = state.searchTerm;
+        if (state.scope === 'all' || state.scope === 'artist') searchParams.artist = state.searchTerm;
+        if (state.scope === 'all' || state.scope === 'album') searchParams.album = state.searchTerm;
+      }
+      const list = await _fetchAllRaw(searchParams);
+      this.allSongsMap.clear();
+      this.totalCount = list.length;
+      list.forEach((a) => {
+        const item = {
+          id: a.id,
+          title: a.title || '未知歌曲',
+          artist: a.artist || '未知歌手',
+          ext: (a.file_ext || '').toUpperCase(),
+          hasLyric: !!a.lyric_path,
+        };
+        this.allSongsMap.set(a.id, item);
+        this.selected.add(a.id);
+      });
+      this._updateUI();
+    } catch (e) {
+      showToast('获取歌曲列表失败', 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  },
+
+  _getSearchHint() {
+    if (!state.searchTerm) return '全选所有';
+    const scopeNames = { all: '全部', title: '歌名', artist: '歌手', album: '专辑' };
+    return `全选「${scopeNames[state.scope] || '全部'}」含"${state.searchTerm}"`;
+  },
+
+  _collectItems() {
+    const rows = $$('#tbody .song-row');
+    this.allItems = [];
+    rows.forEach((row) => {
+      const id = parseInt(row.dataset.id);
+      const title = row.querySelector('.tt')?.textContent || '';
+      const artist = row.querySelector('.c-artist')?.textContent || '';
+      const ext = row.dataset.ext || '';
+      const hasLyric = row.dataset.lyric === '1';
+      this.allItems.push({ id, title, artist, ext, hasLyric });
+    });
+    if (this.totalCount === 0) {
+      this.totalCount = this.allItems.length;
+    }
+  },
+
+  _renderCheckboxes() {
+    const rows = $$('#tbody .song-row');
+    rows.forEach((row) => {
+      const existing = row.querySelector('.c-chk-cell');
+      if (existing) return;
+      const td = document.createElement('td');
+      td.className = 'c-chk-cell';
+      const id = parseInt(row.dataset.id);
+      const checked = this.selected.has(id);
+      td.innerHTML = `<button class="row-check-cell${checked ? ' checked' : ''}" data-id="${id}">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
+      </button>`;
+      row.insertBefore(td, row.firstChild);
+      td.querySelector('.row-check-cell').addEventListener('click', () => {
+        this.toggleItem(id);
+      });
+    });
+  },
+
+  _updateUI() {
+    const count = this.selected.size;
+    const pageSelectedCount = this.allItems.filter((item) => this.selected.has(item.id)).length;
+    const pageTotal = this.allItems.length;
+
+    $$('.row-check-cell').forEach((cb) => {
+      const id = parseInt(cb.dataset.id);
+      cb.classList.toggle('checked', this.selected.has(id));
+    });
+
+    this._updateCheckAllBtn(pageSelectedCount, pageTotal);
+
+    $('#batchCount').innerHTML = `已选 <b>${count}</b> 首`;
+
+    const hintEl = document.querySelector('.batch-hint');
+    if (hintEl) hintEl.textContent = this._getSearchHint();
+
+    const barBtn = $('#btnBatchCheckAll');
+    if (count === 0) barBtn.dataset.state = 'none';
+    else if (count === this.totalCount && this.totalCount > 0) barBtn.dataset.state = 'all';
+    else barBtn.dataset.state = 'some';
+
+    const hasSelection = count > 0;
+    $('#btnBatchDlSong').disabled = !hasSelection;
+    $('#btnBatchDlLyric').disabled = !hasSelection;
+    $('#btnBatchSearchLyric').disabled = !hasSelection;
+    $('#btnBatchDelete').disabled = !hasSelection;
+  },
+
+  _updateCheckAllBtn(pageSelectedCount, pageTotal) {
+    const btn = $('#btnCheckAll');
+    if (!btn) return;
+    if (pageTotal === 0 || pageSelectedCount === 0) {
+      btn.dataset.state = 'none';
+    } else if (pageSelectedCount === pageTotal) {
+      btn.dataset.state = 'all';
+    } else {
+      btn.dataset.state = 'some';
+    }
+  },
+
+  getSelectedItems() {
+    if (this.allSongsMap.size > 0) {
+      return [...this.selected].map((id) => this.allSongsMap.get(id)).filter(Boolean);
+    }
+    return this.allItems.filter((item) => this.selected.has(item.id));
+  },
+
+  refreshAfterLoad(apiTotal) {
+    if (!this.active) return;
+    this._collectItems();
+    if (apiTotal > 0) this.totalCount = apiTotal;
+    this._syncCurrentPageToMap();
+    this._renderCheckboxes();
+    this._updateUI();
+  },
+
+  _syncCurrentPageToMap() {
+    this.allItems.forEach((item) => {
+      if (!this.allSongsMap.has(item.id)) {
+        this.allSongsMap.set(item.id, item);
+      }
+    });
+  },
+};
+
+async function batchDownloadSongs() {
+  const items = Batch.getSelectedItems();
+  if (items.length === 0) return;
+
+  let success = 0;
+  let fail = 0;
+
+  for (const item of items) {
+    try {
+      const filename = item.title ? `${item.title}.${item.ext || 'mp3'}` : `song_${item.id}.${item.ext || 'mp3'}`;
+      const a = document.createElement('a');
+      a.href = `/audio/source?id=${item.id}`;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      success++;
+    } catch (e) {
+      fail++;
+    }
+  }
+
+  showBatchResult('下载歌曲完成', `共处理 ${items.length} 首歌曲`, {
+    ok: success,
+    skip: 0,
+    fail: fail,
+  });
+}
+
+async function batchDownloadLyrics() {
+  const items = Batch.getSelectedItems();
+  if (items.length === 0) return;
+
+  let success = 0;
+  let skip = 0;
+  let fail = 0;
+
+  for (const item of items) {
+    if (!item.hasLyric) {
+      skip++;
+      continue;
+    }
+    try {
+      const filename = item.title ? `${item.title}.lrc` : `lyric_${item.id}.lrc`;
+      const a = document.createElement('a');
+      a.href = `/audio/lyric/source?id=${item.id}`;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      success++;
+    } catch (e) {
+      fail++;
+    }
+  }
+
+  showBatchResult('下载歌词完成', `共处理 ${items.length} 首歌曲`, {
+    ok: success,
+    skip: skip,
+    fail: fail,
+  });
+}
+
+async function batchDeleteSongs() {
+  const items = Batch.getSelectedItems();
+  if (items.length === 0) return;
+
+  $('#cTitle').textContent = '批量删除';
+  $('#cMsg').textContent = `确定要将 ${items.length} 首歌曲移至回收站吗？`;
+
+  confirmCb = async () => {
+    closeConfirm();
+    const ids = items.map((item) => item.id);
+    try {
+      const res = await apiDelete('/audio/delete', { ids: ids });
+      if (res.code === 0) {
+        showBatchResult('删除完成', `共处理 ${items.length} 首歌曲`, {
+          ok: items.length,
+          skip: 0,
+          fail: 0,
+        });
+        Batch.selected.clear();
+        loadLibrary();
+      } else {
+        showToast(res.message || '删除失败', 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  };
+
+  $('#ovConfirm').classList.add('show');
+}
+
+const BatchLyricSearch = {
+  items: [],
+  currentIndex: 0,
+  cancelled: false,
+  stats: { ok: 0, skip: 0, fail: 0, skippedExisting: 0 },
+
+  async start(items) {
+    this.items = items;
+    this.currentIndex = 0;
+    this.cancelled = false;
+    this.stats = { ok: 0, skip: 0, fail: 0, skippedExisting: 0 };
+
+    const needSearch = items.filter((it) => !it.hasLyric).length;
+    const alreadyHave = items.length - needSearch;
+
+    $('#ovBatchLyric').classList.add('show');
+    if (alreadyHave > 0) {
+      $('#batchLyricSubtitle').textContent = `共 ${items.length} 首，其中 ${alreadyHave} 首已有歌词将跳过`;
+    } else {
+      $('#batchLyricSubtitle').textContent = `共 ${items.length} 首，逐首搜索并选择歌词`;
+    }
+
+    await this._processCurrent();
+  },
+
+  async _processCurrent() {
+    if (this.cancelled) return;
+    if (this.currentIndex >= this.items.length) {
+      this._showDone();
+      return;
+    }
+
+    const item = this.items[this.currentIndex];
+
+    this._updateProgress();
+
+    if (item.hasLyric) {
+      this.stats.skippedExisting++;
+      this.currentIndex++;
+      await this._processCurrent();
+      return;
+    }
+
+    $('#blSongTitle').textContent = item.title || '未知歌曲';
+    $('#blSongArtist').textContent = item.artist || '未知歌手';
+
+    $('#blLoading').classList.remove('hidden');
+    $('#blNoResult').classList.add('hidden');
+    $('#blPreview').classList.add('hidden');
+    $('#btnBlApply').classList.add('hidden');
+    $('#btnBlNext').classList.add('hidden');
+    $('#btnBlDone').classList.add('hidden');
+    $('#btnBlSkip').classList.remove('hidden');
+    $('#btnBlCancel').classList.remove('hidden');
+
+    try {
+      const res = await apiGet('/audio/lyric/fetch', { id: item.id });
+      $('#blLoading').classList.add('hidden');
+
+      if (res.code === 0 && res.data && res.data.synced_lyrics) {
+        $('#blPreviewText').value = res.data.synced_lyrics;
+        $('#blPreview').classList.remove('hidden');
+        $('#btnBlApply').classList.remove('hidden');
+      } else {
+        $('#blNoResult').classList.remove('hidden');
+        this.stats.fail++;
+        this._scheduleAutoNext();
+        return;
+      }
+    } catch (e) {
+      $('#blLoading').classList.add('hidden');
+      $('#blNoResult').classList.remove('hidden');
+      this.stats.fail++;
+      this._scheduleAutoNext();
+      return;
+    }
+
+    $('#btnBlNext').classList.remove('hidden');
+  },
+
+  async _applyCurrent() {
+    const item = this.items[this.currentIndex];
+    const editedText = $('#blPreviewText').value.trim();
+    if (!editedText) {
+      this.stats.fail++;
+      this.currentIndex++;
+      await this._processCurrent();
+      return;
+    }
+
+    try {
+      const blob = new Blob([editedText], { type: 'text/plain' });
+      const file = new File([blob], 'lyric.lrc', { type: 'text/plain' });
+      const fd = new FormData();
+      fd.append('id', item.id);
+      fd.append('file', file);
+      const res = await fetch('/audio/lyric/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.code === 0) {
+        this.stats.ok++;
+      } else {
+        this.stats.fail++;
+      }
+    } catch (e) {
+      this.stats.fail++;
+    }
+
+    this.currentIndex++;
+    await this._processCurrent();
+  },
+
+  _skipCurrent() {
+    clearTimeout(this._autoNextTimer);
+    this.stats.skip++;
+    this.currentIndex++;
+    this._processCurrent();
+  },
+
+  _cancelAll() {
+    this.cancelled = true;
+    clearTimeout(this._autoNextTimer);
+    closeBatchLyricModal();
+    showToast('已取消批量歌词搜索', 'warn');
+  },
+
+  _next() {
+    clearTimeout(this._autoNextTimer);
+    this.currentIndex++;
+    this._processCurrent();
+  },
+
+  _scheduleAutoNext() {
+    this._autoNextTimer = setTimeout(() => {
+      if (this.cancelled) return;
+      this.currentIndex++;
+      this._processCurrent();
+    }, 800);
+  },
+
+  _updateProgress() {
+    const total = this.items.length;
+    const cur = this.currentIndex + 1;
+    const pct = (this.currentIndex / total) * 100;
+    $('#blProgressFill').style.width = pct + '%';
+    $('#blProgressText').textContent = `${cur} / ${total}`;
+  },
+
+  _showDone() {
+    const total = this.items.length;
+    $('#blProgressFill').style.width = '100%';
+    $('#blProgressText').textContent = `${total} / ${total}`;
+
+    $('#blSongInfo').innerHTML = '';
+    $('#blOptions').innerHTML = '';
+
+    $('#btnBlSkip').classList.add('hidden');
+    $('#btnBlCancel').classList.add('hidden');
+    $('#btnBlApply').classList.add('hidden');
+    $('#btnBlNext').classList.add('hidden');
+    $('#btnBlDone').classList.remove('hidden');
+
+    $('#batchLyricSubtitle').textContent = '搜索完成';
+  },
+
+  close() {
+    this.cancelled = true;
+    clearTimeout(this._autoNextTimer);
+    $('#ovBatchLyric').classList.remove('show');
+
+    if (this.stats.ok > 0 || this.stats.skip > 0 || this.stats.fail > 0 || this.stats.skippedExisting > 0) {
+      const total = this.items.length;
+      showBatchResult('批量歌词搜索完成', `共处理 ${total} 首歌曲`, {
+        ok: this.stats.ok,
+        skip: this.stats.skip + this.stats.skippedExisting,
+        fail: this.stats.fail,
+      });
+      loadLibrary();
+    }
+  },
+};
+
+function closeBatchLyricModal() {
+  BatchLyricSearch.close();
+}
+
+function showBatchResult(title, msg, stats) {
+  $('#batchResultTitle').textContent = title;
+  $('#batchResultMsg').textContent = msg;
+
+  const hasFail = stats.fail > 0;
+  const iconEl = $('#batchResultIcon');
+  iconEl.className = 'm-ic ' + (hasFail ? 'warn' : 'edit');
+
+  let html = '';
+  if (stats.ok > 0) {
+    html += `<div class="batch-result-stat s-ok"><b>${stats.ok}</b><span>成功</span></div>`;
+  }
+  if (stats.skip > 0) {
+    html += `<div class="batch-result-stat s-skip"><b>${stats.skip}</b><span>跳过</span></div>`;
+  }
+  if (stats.fail > 0) {
+    html += `<div class="batch-result-stat s-fail"><b>${stats.fail}</b><span>失败</span></div>`;
+  }
+  if (!html) {
+    html = `<div class="batch-result-stat s-skip"><b>${stats.ok + stats.skip + stats.fail}</b><span>无操作</span></div>`;
+  }
+  $('#batchResultStats').innerHTML = html;
+  $('#ovBatchResult').classList.add('show');
+}
+
+function closeBatchResult() {
+  $('#ovBatchResult').classList.remove('show');
+}
+
+function bindBatchEvents() {
+  $$('#modeSeg button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      $$('#modeSeg button').forEach((b) => b.classList.remove('on'));
+      btn.classList.add('on');
+      if (mode === 'batch') {
+        Batch.enter();
+      } else {
+        Batch.exit();
+      }
+    });
+  });
+
+  $('#btnBatchCheckAll').addEventListener('click', () => Batch.toggleAll());
+  $('#btnCheckAll').addEventListener('click', () => Batch.togglePageAll());
+
+  $('#btnBatchDlSong').addEventListener('click', batchDownloadSongs);
+  $('#btnBatchDlLyric').addEventListener('click', batchDownloadLyrics);
+  $('#btnBatchDelete').addEventListener('click', batchDeleteSongs);
+
+  $('#btnBatchSearchLyric').addEventListener('click', () => {
+    const items = Batch.getSelectedItems();
+    if (items.length === 0) return;
+    BatchLyricSearch.start(items, true);
+  });
+
+  $('#btnBatchLyricClose').addEventListener('click', () => BatchLyricSearch._cancelAll());
+  $('#ovBatchLyric').addEventListener('click', (e) => {
+    if (e.target === $('#ovBatchLyric')) BatchLyricSearch._cancelAll();
+  });
+
+  $('#btnBlSkip').addEventListener('click', () => BatchLyricSearch._skipCurrent());
+  $('#btnBlCancel').addEventListener('click', () => BatchLyricSearch._cancelAll());
+  $('#btnBlApply').addEventListener('click', () => BatchLyricSearch._applyCurrent());
+  $('#btnBlNext').addEventListener('click', () => BatchLyricSearch._next());
+  $('#btnBlDone').addEventListener('click', () => closeBatchLyricModal());
+
+  $('#btnBatchResultOk').addEventListener('click', closeBatchResult);
+  $('#ovBatchResult').addEventListener('click', (e) => {
+    if (e.target === $('#ovBatchResult')) closeBatchResult();
+  });
+}
+
 function init() {
   initTheme();
   Player.init();
   bindEvents();
   bindSyncEvents();
+  bindBatchEvents();
   loadLibrary();
 }
 

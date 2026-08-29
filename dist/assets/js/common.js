@@ -133,18 +133,17 @@ function getExtClass(ext) {
 }
 
 /* ---------- song data helpers ---------- */
-async function _fetchAllRaw() {
-  const countRes = await apiGet('/audio/search', {
+async function _fetchAllRaw(searchParams) {
+  const baseParams = {
     page: 1, page_size: 1,
     sort_by: state.sortBy, sort_order: state.sortOrder,
-  });
+  };
+  const countParams = { ...baseParams, ...searchParams };
+  const countRes = await apiGet('/audio/search', countParams);
   if (countRes.code !== 0) return [];
   const total = countRes.data.pagination.total || 0;
   if (total === 0) return [];
-  const res = await apiGet('/audio/search', {
-    page: 1, page_size: total,
-    sort_by: state.sortBy, sort_order: state.sortOrder,
-  });
+  const res = await apiGet('/audio/search', { ...countParams, page_size: total });
   if (res.code !== 0) return [];
   return res.data.audio_list || [];
 }
