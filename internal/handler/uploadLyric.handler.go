@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"MultiMediaManager/internal/logic"
+	"Rivus/internal/logic"
 
 	"github.com/gin-gonic/gin"
 )

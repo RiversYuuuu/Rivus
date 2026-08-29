@@ -1,4 +1,4 @@
-module MultiMediaManager
+module Rivus
 
 go 1.26.5
 

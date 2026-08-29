@@ -4,8 +4,8 @@ package handler
 import (
 	"net/http"
 
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/logic"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/logic"
 
 	"github.com/gin-gonic/gin"
 )

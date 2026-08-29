@@ -1,7 +1,7 @@
 package logic
 
 import (
-	generated "MultiMediaManager/internal/generated"
+	generated "Rivus/internal/generated"
 	"fmt"
 	"io"
 	"os"

@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"MultiMediaManager/internal/repository"
+	"Rivus/internal/repository"
 	"log/slog"
 )
 

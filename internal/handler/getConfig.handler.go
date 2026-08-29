@@ -4,7 +4,7 @@ package handler
 import (
 	"net/http"
 
-	"MultiMediaManager/internal/logic"
+	"Rivus/internal/logic"
 
 	"github.com/gin-gonic/gin"
 )

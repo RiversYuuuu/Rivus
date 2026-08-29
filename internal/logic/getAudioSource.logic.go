@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	generated "MultiMediaManager/internal/generated"
+	generated "Rivus/internal/generated"
 )
 
 type GetAudioSourceLogic struct {

@@ -1,6 +1,6 @@
 package handler
 
-import "MultiMediaManager/internal/logic"
+import "Rivus/internal/logic"
 
 type Handler struct {
 	Logic *logic.Logic

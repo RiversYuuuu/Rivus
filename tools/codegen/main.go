@@ -107,8 +107,8 @@ import (
     "net/http"
 
     "github.com/gin-gonic/gin"
-    generated "MultiMediaManager/internal/generated"
-    "MultiMediaManager/internal/logic"
+    generated "Rivus/internal/generated"
+    "Rivus/internal/logic"
 )
 
 // {{.OperationID}} {{.Summary}}
@@ -159,7 +159,7 @@ func genLogicFile(info HandlerInfo) {
 	tpl := `package logic
 
 import (
-    generated "MultiMediaManager/internal/generated"
+    generated "Rivus/internal/generated"
 )
 
 // {{.OperationID}}Logic {{.Summary}}

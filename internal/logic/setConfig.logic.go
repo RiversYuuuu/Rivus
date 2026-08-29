@@ -1,8 +1,8 @@
 package logic
 
 import (
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/model"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/model"
 	"errors"
 	"os"
 )

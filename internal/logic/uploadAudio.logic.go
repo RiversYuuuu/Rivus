@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/model"
-	"MultiMediaManager/internal/tool"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/model"
+	"Rivus/internal/tool"
 
 	"go.senan.xyz/taglib"
 )

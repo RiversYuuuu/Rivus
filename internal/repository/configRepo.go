@@ -1,6 +1,6 @@
 package repository
 
-import "MultiMediaManager/internal/model"
+import "Rivus/internal/model"
 
 func (r *Repository) GetConfig() (*model.Config, error) {
 	var config model.Config

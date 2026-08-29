@@ -53,7 +53,7 @@ Rivus/
 make run
 ```
 
-服务默认监听 `http://localhost:8080`，数据存储在 `~/.MultiMediaManager/` 目录下。
+服务默认监听 `http://localhost:8080`，数据存储在 `~/.Rivus/` 目录下。
 
 ### 代码生成
 

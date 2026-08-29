@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: MultiMediaManager API
+  title: Rivus API
   description: 多媒体管理系统的后端 API
   version: 1.0.0
 servers:

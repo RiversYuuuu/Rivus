@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"MultiMediaManager/internal/model"
+	"Rivus/internal/model"
 
 	"gorm.io/gorm"
 )

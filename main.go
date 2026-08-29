@@ -8,10 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/handler"
-	"MultiMediaManager/internal/logic"
-	"MultiMediaManager/internal/repository"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/handler"
+	"Rivus/internal/logic"
+	"Rivus/internal/repository"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// 创建数据目录
-	dataDir := filepath.Join(homeDir, ".MultiMediaManager")
+	dataDir := filepath.Join(homeDir, ".Rivus")
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		panic(err)
 	}

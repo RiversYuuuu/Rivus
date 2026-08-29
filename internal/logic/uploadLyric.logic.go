@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/tool"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/tool"
 )
 
 type UploadLyricLogic struct {

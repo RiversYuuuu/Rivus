@@ -1,4 +1,4 @@
-# 流集 (MultiMediaManager) 前端架构说明
+# 流集 (Rivus) 前端架构说明
 
 ## 一、目录结构
 

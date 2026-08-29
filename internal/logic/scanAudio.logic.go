@@ -6,9 +6,9 @@ import (
 
 	"go.senan.xyz/taglib"
 
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/model"
-	"MultiMediaManager/internal/tool"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/model"
+	"Rivus/internal/tool"
 )
 
 // ScanAudioLogic 扫描音频目录，构建音频元数据

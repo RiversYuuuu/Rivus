@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"MultiMediaManager/internal/model"
-	"MultiMediaManager/internal/repository"
+	"Rivus/internal/model"
+	"Rivus/internal/repository"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dbPath := filepath.Join(homeDir, ".MultiMediaManager", "data.db")
+	dbPath := filepath.Join(homeDir, ".Rivus", "data.db")
 	repo, err := repository.NewRepository(dbPath)
 	if err != nil {
 		log.Fatal(err)

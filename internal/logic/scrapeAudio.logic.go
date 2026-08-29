@@ -1,8 +1,8 @@
 package logic
 
 import (
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/tool"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/tool"
 )
 
 // ScrapeAudioLogic 刮削音频元数据

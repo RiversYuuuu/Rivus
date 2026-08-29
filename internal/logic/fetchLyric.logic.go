@@ -1,8 +1,8 @@
 package logic
 
 import (
-	generated "MultiMediaManager/internal/generated"
-	"MultiMediaManager/internal/tool"
+	generated "Rivus/internal/generated"
+	"Rivus/internal/tool"
 )
 
 // FetchLyricLogic 拉取歌词

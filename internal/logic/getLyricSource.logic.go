@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	generated "MultiMediaManager/internal/generated"
+	generated "Rivus/internal/generated"
 )
 
 type GetLyricSourceLogic struct {

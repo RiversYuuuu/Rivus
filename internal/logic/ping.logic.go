@@ -1,7 +1,7 @@
 package logic
 
 import (
-	generated "MultiMediaManager/internal/generated"
+	generated "Rivus/internal/generated"
 )
 
 // PingLogic 健康检查接口
