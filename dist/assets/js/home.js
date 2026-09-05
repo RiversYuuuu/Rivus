@@ -13,6 +13,14 @@ async function loadHomeStatus() {
         $('#audioStatus').classList.add('ok');
         $('#audioMeta').classList.remove('hidden');
       }
+
+      state.imageDir = cfg.data.image_dir || '';
+      if (state.imageDir) {
+        $('#imageStatus').textContent = '已就绪';
+        $('#imageStatus').classList.remove('warn');
+        $('#imageStatus').classList.add('ok');
+        $('#imageMeta').classList.remove('hidden');
+      }
     }
 
     const res = await apiGet('/audio/search', { page: 1, page_size: 1 });
@@ -41,6 +49,9 @@ async function loadHomeStatus() {
     $('#audioStatus').textContent = '未连接';
     $('#audioStatus').classList.remove('ok');
     $('#audioStatus').classList.add('warn');
+    $('#imageStatus').textContent = '未连接';
+    $('#imageStatus').classList.remove('ok');
+    $('#imageStatus').classList.add('warn');
   }
 }
 
@@ -52,6 +63,14 @@ function bindEvents() {
       window.location.href = '/audiopage/console';
     } else {
       window.location.href = '/audiopage/setting';
+    }
+  });
+
+  $('#cardImage').addEventListener('click', () => {
+    if (state.imageDir) {
+      window.location.href = '/imagepage/console';
+    } else {
+      window.location.href = '/imagepage/setting';
     }
   });
 

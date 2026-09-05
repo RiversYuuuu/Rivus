@@ -149,6 +149,11 @@ type Config struct {
 	//
 	// Example: /c/users/default/Music
 	AudioDir *string `json:"audio_dir,omitempty"`
+
+	// ImageDir 图片目录
+	//
+	// Example: /c/users/default/Picture
+	ImageDir *string `json:"image_dir,omitempty"`
 }
 
 // DeleteAudioRequest defines model for DeleteAudioRequest.

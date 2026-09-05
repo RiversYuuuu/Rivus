@@ -27,10 +27,15 @@ func (l *SetConfigLogic) SetConfig(req *generated.SetConfigRequest) (*generated.
 	if req.AcoustidApiKey != nil {
 		acoustidApiKey = *req.AcoustidApiKey
 	}
+	var imageDir string
+	if req.ImageDir != nil {
+		imageDir = *req.ImageDir
+	}
 
 	config := model.Config{
 		AudioDir:       audioDir,
 		AcoustIDApiKey: acoustidApiKey,
+		ImageDir:       imageDir,
 	}
 
 	// 校验音频目录是否存在
@@ -38,6 +43,14 @@ func (l *SetConfigLogic) SetConfig(req *generated.SetConfigRequest) (*generated.
 		if _, err := os.Stat(config.AudioDir); os.IsNotExist(err) {
 			l.Logger.Warn("AudioDir not exist, err:", "err", err, "path", config.AudioDir)
 			return nil, errors.New("AudioDir not exist")
+		}
+	}
+
+	// 校验图片目录是否存在
+	if config.ImageDir != "" {
+		if _, err := os.Stat(config.ImageDir); os.IsNotExist(err) {
+			l.Logger.Warn("ImageDir not exist, err:", "err", err, "path", config.ImageDir)
+			return nil, errors.New("ImageDir not exist")
 		}
 	}
 

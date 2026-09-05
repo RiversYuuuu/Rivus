@@ -60,6 +60,12 @@ func main() {
 	r.GET("/audiopage/setting", func(c *gin.Context) {
 		c.File("./dist/assets/html/audiopage/setting.html")
 	})
+	r.GET("/imagepage/setting", func(c *gin.Context) {
+		c.File("./dist/assets/html/imagepage/setting.html")
+	})
+	r.GET("/imagepage/console", func(c *gin.Context) {
+		c.File("./dist/assets/html/imagepage/console.html")
+	})
 
 	r.NoRoute(func(c *gin.Context) {
 		c.Redirect(302, "/")

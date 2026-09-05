@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>流集 - 本地多媒体管家</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 7.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='%2364B5F6' stroke-width='2.2' stroke-linecap='round'/><path d='M3 12c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='%232196F3' stroke-width='2.4' stroke-linecap='round'/><path d='M3 16.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='%230D47A1' stroke-width='2.2' stroke-linecap='round'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='3' y1='0' x2='18' y2='0' gradientUnits='userSpaceOnUse'><stop offset='0' stop-color='%2364B5F6'/><stop offset='.22' stop-color='%232196F3'/><stop offset='.45' stop-color='%2366BB6A'/><stop offset='.62' stop-color='%239CCC65'/><stop offset='.8' stop-color='%23FFCA45'/><stop offset='1' stop-color='%23FFB74D'/></linearGradient></defs><path d='M3 7.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='url(%23g)' stroke-width='2.2' stroke-linecap='round'/><path d='M3 12c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='url(%23g)' stroke-width='2.4' stroke-linecap='round'/><path d='M3 16.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='url(%23g)' stroke-width='2.2' stroke-linecap='round'/></svg>">
 <link rel="stylesheet" href="/assets/css/common.css">
 <link rel="stylesheet" href="/assets/css/home.css">
 </head>
@@ -14,9 +14,16 @@
   <header class="home-top">
     <div class="tb-brand">
       <svg class="logo-disc" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
-        <path d='M3 7.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='#64B5F6' stroke-width='2.2' stroke-linecap='round'/>
-        <path d='M3 12c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='#2196F3' stroke-width='2.4' stroke-linecap='round'/>
-        <path d='M3 16.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='#0D47A1' stroke-width='2.2' stroke-linecap='round'/>
+        <defs>
+          <linearGradient id='g' x1='3' y1='0' x2='18' y2='0' gradientUnits='userSpaceOnUse'>
+            <stop offset='0' stop-color='#64B5F6'/><stop offset='.22' stop-color='#2196F3'/>
+            <stop offset='.45' stop-color='#66BB6A'/><stop offset='.62' stop-color='#9CCC65'/>
+            <stop offset='.8' stop-color='#FFCA45'/><stop offset='1' stop-color='#FFB74D'/>
+          </linearGradient>
+        </defs>
+        <path d='M3 7.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='url(#g)' stroke-width='2.2' stroke-linecap='round'/>
+        <path d='M3 12c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='url(#g)' stroke-width='2.4' stroke-linecap='round'/>
+        <path d='M3 16.5c2.5-3 5-3 7.5 0s5 3 7.5 0' fill='none' stroke='url(#g)' stroke-width='2.2' stroke-linecap='round'/>
       </svg>
       <span class="tb-name">流集</span><span class="tb-ver mono">v0.3.0</span>
     </div>
@@ -51,11 +58,20 @@
         </div>
       </article>
 
-      <article class="mod-card mod-locked card" data-name="图片管理">
-        <span class="lock-tag">即将上线</span>
-        <div class="lock-ic"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
-        <h4>图片管理</h4><div class="mono mod-en">IMAGE · SOON</div>
-        <p>图片收藏、标签分类与时间线浏览。</p>
+      <article class="mod-card mod-image card" id="cardImage" tabindex="0" role="button" aria-label="进入图片管理">
+        <span class="status-chip warn" id="imageStatus">未初始化</span>
+        <div class="mod-icon-row">
+          <svg class="logo-disc" viewBox="0 0 48 48" fill="none"><rect x="4" y="4" width="40" height="40" rx="6" fill="var(--bg2)" stroke="var(--green)" stroke-width="2"/><circle cx="16" cy="18" r="4" stroke="var(--line2)" stroke-width="1.5" fill="none"/><path d="M4 34 16 24 26 32 34 22 44 30" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          <div><h3>图片管理</h3><div class="mono mod-en">IMAGE</div></div>
+        </div>
+        <p class="mod-desc">扫描本地目录建立图片数据库，支持按文件名 / 标签 / 时间线浏览，并可编辑、删除与恢复条目。</p>
+        <div class="audio-meta hidden" id="imageMeta">
+          <div class="am"><b id="imCount">0</b><span>图片</span></div>
+          <div class="am"><b id="imSize">0</b><span>占用</span></div>
+        </div>
+        <div class="mod-foot">
+          <span class="enter" id="imageEnter">进入模块 <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
       </article>
       <article class="mod-card mod-locked card" data-name="视频管理">
         <span class="lock-tag">即将上线</span>

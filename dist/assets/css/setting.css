@@ -1,4 +1,18 @@
 /* ---------- SETUP ---------- */
+#screenImgSetup{--amber:var(--green);--amber2:var(--green2);--mark:var(--markG);--btn-ink:#051a0a;--glowA:var(--glowG)}
+body:has(#screenImgSetup) #browseOverlay,
+body:has(#screenImgSetup) #toasts{--amber:var(--green);--amber2:var(--green2);--mark:var(--markG);--btn-ink:#051a0a;--glowA:var(--glowG)}
+#screenImgSetup .btn-primary,
+body:has(#screenImgSetup) #browseOverlay .btn-primary{background:linear-gradient(135deg,var(--amber),var(--amber2));color:#051a0a;border:none;font-weight:700;letter-spacing:.06em}
+#screenImgSetup .btn-primary:hover:not(:disabled),
+body:has(#screenImgSetup) #browseOverlay .btn-primary:hover:not(:disabled){color:#051a0a;box-shadow:0 8px 24px var(--mark);filter:brightness(1.06)}
+#screenImgSetup .btn-outline,
+body:has(#screenImgSetup) #browseOverlay .btn-outline{background:transparent;border-color:var(--amber);color:var(--amber)}
+#screenImgSetup .btn-outline:hover:not(:disabled),
+body:has(#screenImgSetup) #browseOverlay .btn-outline:hover:not(:disabled){background:var(--mark);color:var(--amber)}
+body:has(#screenImgSetup) #browseOverlay .m-ic.edit{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber)}
+body:has(#screenImgSetup) #browseOverlay .spin{border-top-color:var(--amber)}
+body:has(#screenImgSetup)::before{background:radial-gradient(900px 520px at 6% -8%,var(--glowG),transparent 62%),radial-gradient(820px 560px at 102% 110%,var(--glowT),transparent 62%)}
 .setup-wrap{max-width:1180px;margin:0 auto;padding:46px 28px 72px;display:grid;grid-template-columns:1fr 1.15fr;gap:52px;align-content:center;min-height:calc(100vh - 64px)}
 .brand{display:flex;align-items:center;gap:14px}
 .brand .logo-disc{width:42px;height:42px}
@@ -14,9 +28,9 @@
 .steps li p{font-size:12px;color:var(--ink3);margin-top:2px}
 .steps li.on{border-left-color:var(--amber);background:linear-gradient(90deg,var(--mark),transparent 70%)}
 .steps li.on b{color:var(--btn-ink);background:var(--amber);border-color:var(--amber)}
-.steps li.done{border-left-color:var(--teal)}
-.steps li.done b{color:var(--teal);border-color:var(--teal)}
-.steps li.done h4::after{content:' \2713';color:var(--teal);font-size:12px}
+.steps li.done{border-left-color:var(--amber)}
+.steps li.done b{color:var(--amber);border-color:var(--amber)}
+.steps li.done h4::after{content:' \2713';color:var(--amber);font-size:12px}
 .fmt-chips{display:flex;flex-wrap:wrap;gap:8px}
 .fmt-chips span{font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:11px;color:var(--ink3);border:1px dashed var(--line2);border-radius:6px;padding:4px 9px;transition:.25s}
 .fmt-chips span:hover{color:var(--amber);border-color:var(--amber);transform:translateY(-2px)}

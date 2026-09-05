@@ -485,6 +485,10 @@ components:
         acoustid_api_key:
           type: string
           description: AcoustID API Key
+        image_dir:
+          type: string
+          example: /c/users/default/Picture
+          description: 图片目录
     SetConfigRequest:
       type: object
       $ref: '#/components/schemas/Config'

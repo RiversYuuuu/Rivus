@@ -1,9 +1,10 @@
 package model
 
 type Config struct {
-	ID             uint   `gorm:"primaryKey"`
-	AudioDir       string `gorm:"not null"`
+	ID             uint `gorm:"primaryKey"`
+	AudioDir       string
 	AcoustIDApiKey string `gorm:"size:64"`
+	ImageDir       string
 }
 
 func (Config) TableName() string {
