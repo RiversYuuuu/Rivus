@@ -8,17 +8,39 @@ const imgState = {
   selected: new Set(),
   batchMode: false,
   currentLbIndex: -1,
-  sortBy: 'date_desc',
-  searchTerm: '',
+  sortBy: 'date',
+  sortOrder: 'desc',
 };
 
-function init() {
+const lazyLoader = new IntersectionObserver((entries) => {
+  for (const entry of entries) {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      const src = img.dataset.src;
+      if (src) {
+        img.src = src;
+        img.removeAttribute('data-src');
+      }
+      lazyLoader.unobserve(img);
+    }
+  }
+}, { rootMargin: '400px' });
+
+function imgName(img) {
+  return basename(img.file_path || '');
+}
+
+function imgDate(img) {
+  return img.shot_at || img.create_time || '';
+}
+
+function imgInit() {
   initTheme();
-  bindEvents();
+  imgBindEvents();
   loadImages();
 }
 
-function bindEvents() {
+function imgBindEvents() {
   bindThemeButtons();
 
   $('#btnHome').addEventListener('click', () => {
@@ -29,14 +51,32 @@ function bindEvents() {
     window.location.href = '/imagepage/setting';
   });
 
-  $('#imgSearchInput').addEventListener('input', debounce(() => {
-    imgState.searchTerm = $('#imgSearchInput').value.trim();
-    applyFilter();
-  }, 250));
+  $('#btnImgSync').addEventListener('click', () => openSyncModal('image'));
+  bindSyncEvents();
 
-  $('#imgSortBy').addEventListener('change', () => {
-    imgState.sortBy = $('#imgSortBy').value;
-    applyFilter();
+  $('#sortTrigger').addEventListener('click', (e) => {
+    e.stopPropagation();
+    $('#sortMenu').classList.toggle('hidden');
+  });
+
+  $$('#sortMenu .sort-dropdown-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const field = item.dataset.field;
+      if (imgState.sortBy === field) {
+        imgState.sortOrder = imgState.sortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        imgState.sortBy = field;
+        imgState.sortOrder = 'desc';
+      }
+      updateSortUI();
+      applyFilter();
+      $('#sortMenu').classList.add('hidden');
+    });
+  });
+
+  document.addEventListener('click', () => {
+    $('#sortMenu').classList.add('hidden');
   });
 
   $('#btnBatchMode').addEventListener('click', toggleBatchMode);
@@ -60,10 +100,10 @@ function bindEvents() {
     if (e.target === $('#lightbox')) closeLightbox();
   });
 
-  $('#btnConfirmOk').addEventListener('click', confirmAction);
-  $('#btnConfirmCancel').addEventListener('click', closeConfirm);
+  $('#btnConfirmOk').addEventListener('click', imgConfirmAction);
+  $('#btnConfirmCancel').addEventListener('click', imgCloseConfirm);
   $('#ovConfirm').addEventListener('click', (e) => {
-    if (e.target === $('#ovConfirm')) closeConfirm();
+    if (e.target === $('#ovConfirm')) imgCloseConfirm();
   });
 }
 
@@ -85,29 +125,29 @@ async function loadImages() {
 function applyFilter() {
   let list = [...imgState.images];
 
-  if (imgState.searchTerm) {
-    const kw = imgState.searchTerm.toLowerCase();
-    list = list.filter((img) => {
-      const name = (img.file_name || '').toLowerCase();
-      const path = (img.file_path || '').toLowerCase();
-      return name.includes(kw) || path.includes(kw);
-    });
-  }
-
+  const order = imgState.sortOrder === 'asc' ? 1 : -1;
   list.sort((a, b) => {
     switch (imgState.sortBy) {
-      case 'date_desc': return (b.mod_time || '').localeCompare(a.mod_time || '');
-      case 'date_asc': return (a.mod_time || '').localeCompare(b.mod_time || '');
-      case 'name_asc': return (a.file_name || '').localeCompare(b.file_name || '');
-      case 'name_desc': return (b.file_name || '').localeCompare(a.file_name || '');
-      case 'size_desc': return (b.file_size || 0) - (a.file_size || 0);
-      case 'size_asc': return (a.file_size || 0) - (b.file_size || 0);
+      case 'date': return order * imgDate(a).localeCompare(imgDate(b));
+      case 'size': return order * ((a.file_size || 0) - (b.file_size || 0));
       default: return 0;
     }
   });
 
   imgState.filtered = list;
   renderGrid();
+}
+
+function updateSortUI() {
+  const label = imgState.sortBy === 'size' ? '大小' : '日期';
+  const arrow = imgState.sortOrder === 'asc' ? '↑' : '↓';
+  $('#sortLabel').textContent = label;
+  $('#sortArrow').textContent = arrow;
+  $$('#sortMenu .sort-dropdown-item').forEach((item) => {
+    const active = item.dataset.field === imgState.sortBy;
+    item.classList.toggle('active', active);
+    item.textContent = active ? item.dataset.field === 'size' ? '大小 ' + arrow : '日期 ' + arrow : item.dataset.field === 'size' ? '大小' : '日期';
+  });
 }
 
 function renderGrid() {
@@ -136,7 +176,7 @@ function renderGrid() {
         <div class="photo-check${checked}" data-id="${img.id}">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <img src="/image/source?id=${img.id}" loading="lazy" alt="${esc(img.file_name || '')}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236d7c90%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22m21 15-5-5L5 21%22/></svg>'">
+        <img data-src="/image/thumb?id=${img.id}" loading="lazy" alt="${esc(imgName(img))}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236d7c90%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22m21 15-5-5L5 21%22/></svg>'">
         ${ext ? `<span class="photo-ext">${esc(ext)}</span>` : ''}
       </div>`;
     }
@@ -145,6 +185,7 @@ function renderGrid() {
 
   content.innerHTML = html;
   bindCellEvents();
+  content.querySelectorAll('img[data-src]').forEach((img) => lazyLoader.observe(img));
 }
 
 function bindCellEvents() {
@@ -170,7 +211,7 @@ function bindCellEvents() {
 function groupByDate(images) {
   const map = new Map();
   for (const img of images) {
-    const raw = img.mod_time || img.create_time || '';
+    const raw = imgDate(img);
     let label = '未知日期';
     if (raw) {
       const d = raw.slice(0, 10);
@@ -191,19 +232,29 @@ function updateStats() {
   const total = imgState.images.length;
   let totalSize = 0;
   const exts = new Set();
-  const dates = new Set();
+  let earliest = '';
+  let latest = '';
 
   for (const img of imgState.images) {
     totalSize += img.file_size || 0;
     if (img.file_ext) exts.add(img.file_ext.toLowerCase());
-    const raw = img.mod_time || img.create_time || '';
-    if (raw) dates.add(raw.slice(0, 10));
+    const raw = imgDate(img);
+    if (raw) {
+      const day = raw.slice(0, 10);
+      if (!earliest || day < earliest) earliest = day;
+      if (!latest || day > latest) latest = day;
+    }
+  }
+
+  let spanDays = 0;
+  if (earliest && latest) {
+    spanDays = Math.floor((new Date(latest) - new Date(earliest)) / 86400000);
   }
 
   $('#isCount').textContent = total;
   $('#isSize').textContent = (totalSize / 1e9).toFixed(2);
   $('#isFormats').textContent = exts.size;
-  $('#isDays').textContent = dates.size;
+  $('#isDays').textContent = spanDays;
 }
 
 /* ---------- batch ---------- */
@@ -294,15 +345,16 @@ function openLightbox(index) {
   const lb = $('#lightbox');
   const lbImg = $('#lbImg');
   lbImg.src = `/image/source?id=${img.id}`;
-  $('#lbFname').textContent = img.file_name || '';
+  $('#lbFname').textContent = imgName(img);
   $('#lbSize').textContent = formatSize(img.file_size || 0);
-  $('#lbDate').textContent = img.mod_time ? img.mod_time.slice(0, 10) : '';
+  const date = imgDate(img);
+  $('#lbDate').textContent = date ? date.slice(0, 10) : '';
   $('#lbCounter').textContent = `${index + 1} / ${imgState.filtered.length}`;
 
-  $('#lbDName').textContent = img.file_name || '-';
+  $('#lbDName').textContent = imgName(img) || '-';
   $('#lbDExt').textContent = (img.file_ext || '-').replace(/^\./, '').toUpperCase();
   $('#lbDSize').textContent = formatSize(img.file_size || 0);
-  $('#lbDDate').textContent = img.mod_time ? img.mod_time.slice(0, 19) : '-';
+  $('#lbDDate').textContent = date ? date.slice(0, 19) : '-';
   $('#lbDPath').textContent = img.file_path || '-';
   $('#lbDPath').title = img.file_path || '';
 
@@ -343,14 +395,14 @@ function showConfirm(title, msg, cb) {
   $('#ovConfirm').classList.add('show');
 }
 
-function closeConfirm() {
+function imgCloseConfirm() {
   $('#ovConfirm').classList.remove('show');
   confirmCallback = null;
 }
 
-function confirmAction() {
+function imgConfirmAction() {
   if (confirmCallback) confirmCallback();
-  closeConfirm();
+  imgCloseConfirm();
 }
 
 /* ---------- utils ---------- */
@@ -362,4 +414,4 @@ function debounce(fn, ms) {
   };
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', imgInit);

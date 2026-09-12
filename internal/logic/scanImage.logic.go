@@ -89,12 +89,16 @@ func (l *ScanImageLogic) buildFileInfo(image *model.Image, filePath string) {
 	}
 	image.FileSize = info.Size()
 
+	mtime := info.ModTime()
+	image.ShotAt = &mtime
+
 	hash, err := tool.ComputeMD5(filePath)
 	if err != nil {
 		l.Logger.Warn("Failed to compute MD5 hash", "error", err, "path", filePath)
 		return
 	}
 	image.MD5 = hash
+
 }
 
 func (l *ScanImageLogic) buildBasicInfo(image *model.Image, filePath string) {
@@ -131,8 +135,8 @@ func (l *ScanImageLogic) buildExifInfo(image *model.Image, filePath string) {
 		return
 	}
 
-	// 拍摄时间
-	if !ex.SelectedDate().IsZero() {
+	// 如果获取到拍摄时间早于文件修改时间，才更新拍摄时间
+	if !ex.SelectedDate().IsZero() && ex.SelectedDate().Before(*image.ShotAt) {
 		t := ex.SelectedDate()
 		image.ShotAt = &t
 	}
@@ -157,6 +161,7 @@ func (l *ScanImageLogic) scanImageFiles(dir string) ([]string, error) {
 		".jpg":  true,
 		".jpeg": true,
 		".png":  true,
+		".heic": true,
 	}
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -165,6 +170,9 @@ func (l *ScanImageLogic) scanImageFiles(dir string) ([]string, error) {
 			return err
 		}
 		if info.IsDir() {
+			if info.Name() == ".thumb" {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if imageExts[filepath.Ext(path)] {

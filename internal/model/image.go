@@ -19,6 +19,9 @@ type Image struct {
 	Width  int `gorm:"comment:宽度（像素）"`
 	Height int `gorm:"comment:高度（像素）"`
 
+	// 缩略图
+	ThumbPath string `gorm:"size:255;comment:缩略图路径"`
+
 	// 拍摄信息
 	ShotAt      *time.Time `gorm:"index;comment:拍摄时间"`
 	Orientation int        `gorm:"comment:朝向（1-8，对应EXIF标准，用于自动转正）"`

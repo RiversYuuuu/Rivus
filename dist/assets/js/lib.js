@@ -748,9 +748,10 @@ const syncState = {
   selectedUpload: new Set(),
   selectedDownload: new Set(),
   activeTab: 'upload',
+  compareType: 'audio',
 };
 
-function openSyncModal() {
+function openSyncModal(compareType) {
   syncState.step = 1;
   syncState.connected = false;
   syncState.directory = '/';
@@ -760,6 +761,7 @@ function openSyncModal() {
   syncState.selectedUpload = new Set();
   syncState.selectedDownload = new Set();
   syncState.activeTab = 'upload';
+  syncState.compareType = compareType || 'audio';
   $('#ovSync').classList.add('show');
   $('#syncIp').value = '';
   $('#syncPort').value = '2121';
@@ -767,6 +769,9 @@ function openSyncModal() {
   $('#syncPass').value = '';
   $('#syncConnStatus').textContent = '';
   $('#syncConnStatus').className = 'sync-conn-status';
+  $('#syncSubtitle').textContent = syncState.compareType === 'image'
+    ? '连接远程 FTP 服务器，同步图片文件'
+    : '连接远程 FTP 服务器，同步音频文件';
   renderSyncStep();
 }
 
@@ -830,7 +835,7 @@ async function testSyncConnection() {
   btn.innerHTML = '<span class="spin" style="width:14px;height:14px;border-width:2px"></span> 连接中…';
 
   try {
-    const res = await apiPost('/audio/sync/test-connection', { ip, port, username, password });
+    const res = await apiPost('/sync/test-connection', { ip, port, username, password });
     if (res.code === 0) {
       syncState.connected = true;
       syncState.ip = ip;
@@ -934,7 +939,7 @@ async function loadSyncDirs(directory) {
   list.innerHTML = '<div class="sync-dir-loading"><span class="spin" style="width:14px;height:14px;border-width:2px"></span> 加载中...</div>';
 
   try {
-    const res = await apiGet('/audio/sync/browse', {
+    const res = await apiGet('/sync/browse', {
       directory,
       ip: syncState.ip,
       port: syncState.port,
@@ -990,12 +995,13 @@ async function doSyncCompare() {
   renderSyncStep();
 
   try {
-    const res = await apiPost('/audio/sync/compare', {
+    const res = await apiPost('/sync/compare', {
       ip: syncState.ip,
       port: syncState.port,
       username: syncState.username,
       password: syncState.password,
       directory: syncState.directory,
+      compare_type: syncState.compareType,
     });
 
     $('#syncCompareLoading').classList.add('hidden');
@@ -1142,7 +1148,7 @@ async function doSyncExecute() {
   const selectedDownload = Array.from(syncState.selectedDownload);
 
   if (selectedUpload.length === 0 && selectedDownload.length === 0) {
-    showToast('请至少选择一首歌曲进行同步', 'warn');
+    showToast('请至少选择一个文件进行同步', 'warn');
     return;
   }
 
@@ -1156,12 +1162,13 @@ async function doSyncExecute() {
   $('#syncExecuteDone').classList.add('hidden');
 
   try {
-    const res = await apiPost('/audio/sync/execute', {
+    const res = await apiPost('/sync/execute', {
       ip: syncState.ip,
       port: syncState.port,
       username: syncState.username,
       password: syncState.password,
       directory: syncState.directory,
+      compare_type: syncState.compareType,
       to_upload: selectedUpload,
       to_download: selectedDownload,
     });
@@ -1174,7 +1181,18 @@ async function doSyncExecute() {
       const dlCount = selectedDownload.length;
       $('#syncExecuteSummary').textContent = `已上传 ${upCount} 个文件，下载 ${dlCount} 个文件`;
       showToast('同步完成');
-      loadLibrary();
+
+      if (syncState.compareType === 'image' && typeof loadImages === 'function') {
+        if (dlCount > 0) {
+          await apiGet('/image/scan');
+        }
+        loadImages();
+      } else if (typeof loadLibrary === 'function') {
+        if (dlCount > 0) {
+          await apiGet('/audio/scan');
+        }
+        loadLibrary();
+      }
     } else {
       $('#syncExecuteSummary').textContent = '同步失败: ' + (res.message || '未知错误');
       showToast('同步失败: ' + (res.message || '未知错误'), 'warn');
@@ -1191,7 +1209,8 @@ async function doSyncExecute() {
 }
 
 function bindSyncEvents() {
-  $('#btnSync').addEventListener('click', openSyncModal);
+  const btnSync = $('#btnSync');
+  if (btnSync) btnSync.addEventListener('click', () => openSyncModal('audio'));
   $('#btnSyncClose').addEventListener('click', closeSyncModal);
   $('#ovSync').addEventListener('click', (e) => { if (e.target === $('#ovSync')) closeSyncModal(); });
 
@@ -1210,7 +1229,11 @@ function bindSyncEvents() {
   $('#btnSyncExecute').addEventListener('click', doSyncExecute);
   $('#btnSyncDone').addEventListener('click', () => {
     closeSyncModal();
-    loadLibrary();
+    if (syncState.compareType === 'image' && typeof loadImages === 'function') {
+      loadImages();
+    } else if (typeof loadLibrary === 'function') {
+      loadLibrary();
+    }
   });
 
   let syncDirFilterTimer;
@@ -1783,7 +1806,7 @@ function bindBatchEvents() {
   });
 }
 
-function init() {
+function initLib() {
   initTheme();
   Player.init();
   bindEvents();
@@ -1792,4 +1815,8 @@ function init() {
   loadLibrary();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('screenLib')) {
+    initLib();
+  }
+});

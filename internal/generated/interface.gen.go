@@ -43,18 +43,6 @@ type ServerInterface interface {
 	// GetAudioSource 获取音频流
 	// (GET /audio/source)
 	GetAudioSource(c *gin.Context, params GetAudioSourceParams)
-
-	// (GET /audio/sync/browse)
-	SyncBrowse(c *gin.Context, params SyncBrowseParams)
-
-	// (POST /audio/sync/compare)
-	SyncCompare(c *gin.Context)
-
-	// (POST /audio/sync/execute)
-	SyncExecute(c *gin.Context)
-
-	// (POST /audio/sync/test-connection)
-	SyncTestConnection(c *gin.Context)
 	// UpdateAudio 更新音频
 	// (POST /audio/update)
 	UpdateAudio(c *gin.Context)
@@ -76,9 +64,27 @@ type ServerInterface interface {
 	// SearchImage 搜索图片
 	// (GET /image/search)
 	SearchImage(c *gin.Context, params SearchImageParams)
+	// GetImageSource 获取图片
+	// (GET /image/source)
+	GetImageSource(c *gin.Context, params GetImageSourceParams)
+	// GetImageThumb 获取图片缩略图
+	// (GET /image/thumb)
+	GetImageThumb(c *gin.Context, params GetImageThumbParams)
 	// Ping 健康检查接口
 	// (GET /ping)
 	Ping(c *gin.Context)
+
+	// (GET /sync/browse)
+	SyncBrowse(c *gin.Context, params SyncBrowseParams)
+
+	// (POST /sync/compare)
+	SyncCompare(c *gin.Context)
+
+	// (POST /sync/execute)
+	SyncExecute(c *gin.Context)
+
+	// (POST /sync/test-connection)
+	SyncTestConnection(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -368,104 +374,6 @@ func (siw *ServerInterfaceWrapper) GetAudioSource(c *gin.Context) {
 	siw.Handler.GetAudioSource(c, params)
 }
 
-// SyncBrowse operation middleware
-func (siw *ServerInterfaceWrapper) SyncBrowse(c *gin.Context) {
-
-	var err error
-	_ = err
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params SyncBrowseParams
-
-	// ------------- Optional query parameter "directory" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "directory", c.Request.URL.Query(), &params.Directory, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter directory: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "ip" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "ip", c.Request.URL.Query(), &params.Ip, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter ip: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "port" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "port", c.Request.URL.Query(), &params.Port, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter port: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "username" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "username", c.Request.URL.Query(), &params.Username, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter username: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "password" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "password", c.Request.URL.Query(), &params.Password, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter password: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.SyncBrowse(c, params)
-}
-
-// SyncCompare operation middleware
-func (siw *ServerInterfaceWrapper) SyncCompare(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.SyncCompare(c)
-}
-
-// SyncExecute operation middleware
-func (siw *ServerInterfaceWrapper) SyncExecute(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.SyncExecute(c)
-}
-
-// SyncTestConnection operation middleware
-func (siw *ServerInterfaceWrapper) SyncTestConnection(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.SyncTestConnection(c)
-}
-
 // UpdateAudio operation middleware
 func (siw *ServerInterfaceWrapper) UpdateAudio(c *gin.Context) {
 
@@ -609,6 +517,60 @@ func (siw *ServerInterfaceWrapper) SearchImage(c *gin.Context) {
 	siw.Handler.SearchImage(c, params)
 }
 
+// GetImageSource operation middleware
+func (siw *ServerInterfaceWrapper) GetImageSource(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetImageSourceParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetImageSource(c, params)
+}
+
+// GetImageThumb operation middleware
+func (siw *ServerInterfaceWrapper) GetImageThumb(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetImageThumbParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetImageThumb(c, params)
+}
+
 // Ping operation middleware
 func (siw *ServerInterfaceWrapper) Ping(c *gin.Context) {
 
@@ -620,6 +582,112 @@ func (siw *ServerInterfaceWrapper) Ping(c *gin.Context) {
 	}
 
 	siw.Handler.Ping(c)
+}
+
+// SyncBrowse operation middleware
+func (siw *ServerInterfaceWrapper) SyncBrowse(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SyncBrowseParams
+
+	// ------------- Optional query parameter "directory" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "directory", c.Request.URL.Query(), &params.Directory, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter directory: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "ip" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ip", c.Request.URL.Query(), &params.Ip, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter ip: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "port" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "port", c.Request.URL.Query(), &params.Port, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter port: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "username" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "username", c.Request.URL.Query(), &params.Username, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter username: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "password" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "password", c.Request.URL.Query(), &params.Password, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter password: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "protocol" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "protocol", c.Request.URL.Query(), &params.Protocol, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter protocol: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncBrowse(c, params)
+}
+
+// SyncCompare operation middleware
+func (siw *ServerInterfaceWrapper) SyncCompare(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncCompare(c)
+}
+
+// SyncExecute operation middleware
+func (siw *ServerInterfaceWrapper) SyncExecute(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncExecute(c)
+}
+
+// SyncTestConnection operation middleware
+func (siw *ServerInterfaceWrapper) SyncTestConnection(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SyncTestConnection(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -665,10 +733,12 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/audio/scrape", wrapper.ScrapeAudio)
 	router.GET(options.BaseURL+"/audio/lyric/fetch", wrapper.FetchLyric)
 	router.GET(options.BaseURL+"/audio/lyric/source", wrapper.GetLyricSource)
-	router.POST(options.BaseURL+"/audio/sync/test-connection", wrapper.SyncTestConnection)
-	router.GET(options.BaseURL+"/audio/sync/browse", wrapper.SyncBrowse)
-	router.POST(options.BaseURL+"/audio/sync/compare", wrapper.SyncCompare)
-	router.POST(options.BaseURL+"/audio/sync/execute", wrapper.SyncExecute)
+	router.POST(options.BaseURL+"/sync/test-connection", wrapper.SyncTestConnection)
+	router.GET(options.BaseURL+"/sync/browse", wrapper.SyncBrowse)
+	router.POST(options.BaseURL+"/sync/compare", wrapper.SyncCompare)
+	router.POST(options.BaseURL+"/sync/execute", wrapper.SyncExecute)
 	router.GET(options.BaseURL+"/image/scan", wrapper.ScanImage)
 	router.GET(options.BaseURL+"/image/search", wrapper.SearchImage)
+	router.GET(options.BaseURL+"/image/source", wrapper.GetImageSource)
+	router.GET(options.BaseURL+"/image/thumb", wrapper.GetImageThumb)
 }

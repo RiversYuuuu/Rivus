@@ -40,7 +40,30 @@ async function loadHomeStatus() {
             allRes.data.audio_list.forEach((a) => {
               totalSize += (a.file_size || 0);
             });
-            $('#amSize').textContent = (totalSize / 1e9).toFixed(2) + ' GB';
+            $('#amSize').textContent = formatSize(totalSize);
+          }
+        }
+      }
+    }
+
+    const imgRes = await apiGet('/image/search', { page: 1, page_size: 1 });
+    if (imgRes.code === 0 && imgRes.data && imgRes.data.pagination) {
+      const total = imgRes.data.pagination.total || 0;
+      $('#imCount').textContent = total;
+    }
+
+    if (state.imageDir && imgRes.data && imgRes.data.image_list && imgRes.data.image_list.length > 0) {
+      const imgStatsRes = await apiGet('/image/search', { page: 1, page_size: 1, sort_by: 'shot_at', sort_order: 'desc' });
+      if (imgStatsRes.code === 0 && imgStatsRes.data && imgStatsRes.data.pagination) {
+        const t = imgStatsRes.data.pagination.total || 0;
+        if (t > 0) {
+          const allImgRes = await apiGet('/image/search', { page: 1, page_size: Math.min(t, 1000) });
+          if (allImgRes.code === 0 && allImgRes.data && allImgRes.data.image_list) {
+            let totalSize = 0;
+            allImgRes.data.image_list.forEach((img) => {
+              totalSize += (img.file_size || 0);
+            });
+            $('#imSize').textContent = formatSize(totalSize);
           }
         }
       }

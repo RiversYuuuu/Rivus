@@ -7,6 +7,96 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for SyncCompareRequestCompareType.
+const (
+	SyncCompareRequestCompareTypeAudio SyncCompareRequestCompareType = "audio"
+	SyncCompareRequestCompareTypeImage SyncCompareRequestCompareType = "image"
+)
+
+// Valid indicates whether the value is a known member of the SyncCompareRequestCompareType enum.
+func (e SyncCompareRequestCompareType) Valid() bool {
+	switch e {
+	case SyncCompareRequestCompareTypeAudio:
+		return true
+	case SyncCompareRequestCompareTypeImage:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SyncCompareRequestProtocol.
+const (
+	SyncCompareRequestProtocolFtp  SyncCompareRequestProtocol = "ftp"
+	SyncCompareRequestProtocolSftp SyncCompareRequestProtocol = "sftp"
+)
+
+// Valid indicates whether the value is a known member of the SyncCompareRequestProtocol enum.
+func (e SyncCompareRequestProtocol) Valid() bool {
+	switch e {
+	case SyncCompareRequestProtocolFtp:
+		return true
+	case SyncCompareRequestProtocolSftp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SyncExecuteRequestCompareType.
+const (
+	SyncExecuteRequestCompareTypeAudio SyncExecuteRequestCompareType = "audio"
+	SyncExecuteRequestCompareTypeImage SyncExecuteRequestCompareType = "image"
+)
+
+// Valid indicates whether the value is a known member of the SyncExecuteRequestCompareType enum.
+func (e SyncExecuteRequestCompareType) Valid() bool {
+	switch e {
+	case SyncExecuteRequestCompareTypeAudio:
+		return true
+	case SyncExecuteRequestCompareTypeImage:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SyncExecuteRequestProtocol.
+const (
+	SyncExecuteRequestProtocolFtp  SyncExecuteRequestProtocol = "ftp"
+	SyncExecuteRequestProtocolSftp SyncExecuteRequestProtocol = "sftp"
+)
+
+// Valid indicates whether the value is a known member of the SyncExecuteRequestProtocol enum.
+func (e SyncExecuteRequestProtocol) Valid() bool {
+	switch e {
+	case SyncExecuteRequestProtocolFtp:
+		return true
+	case SyncExecuteRequestProtocolSftp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SyncTestConnectionRequestProtocol.
+const (
+	SyncTestConnectionRequestProtocolFtp  SyncTestConnectionRequestProtocol = "ftp"
+	SyncTestConnectionRequestProtocolSftp SyncTestConnectionRequestProtocol = "sftp"
+)
+
+// Valid indicates whether the value is a known member of the SyncTestConnectionRequestProtocol enum.
+func (e SyncTestConnectionRequestProtocol) Valid() bool {
+	switch e {
+	case SyncTestConnectionRequestProtocolFtp:
+		return true
+	case SyncTestConnectionRequestProtocolSftp:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetRecycleBinParamsSortBy.
 const (
 	GetRecycleBinParamsSortByArtist GetRecycleBinParamsSortBy = "artist"
@@ -109,6 +199,24 @@ func (e SearchImageParamsSortOrder) Valid() bool {
 	case SearchImageParamsSortOrderAsc:
 		return true
 	case SearchImageParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SyncBrowseParamsProtocol.
+const (
+	SyncBrowseParamsProtocolFtp  SyncBrowseParamsProtocol = "ftp"
+	SyncBrowseParamsProtocolSftp SyncBrowseParamsProtocol = "sftp"
+)
+
+// Valid indicates whether the value is a known member of the SyncBrowseParamsProtocol enum.
+func (e SyncBrowseParamsProtocol) Valid() bool {
+	switch e {
+	case SyncBrowseParamsProtocolFtp:
+		return true
+	case SyncBrowseParamsProtocolSftp:
 		return true
 	default:
 		return false
@@ -439,21 +547,33 @@ type SyncBrowseResponse struct {
 
 // SyncCompareRequest defines model for SyncCompareRequest.
 type SyncCompareRequest struct {
-	// Directory FTP目录路径
+	// CompareType 对比类型
+	CompareType *SyncCompareRequestCompareType `json:"compare_type,omitempty"`
+
+	// Directory 远程目录路径
 	Directory *string `json:"directory,omitempty"`
 
-	// Ip FTP IP地址
+	// Ip 服务器IP地址
 	Ip *string `json:"ip,omitempty"`
 
-	// Password FTP密码
+	// Password 密码
 	Password *string `json:"password,omitempty"`
 
-	// Port FTP端口号
+	// Port 服务器端口号
 	Port *int `json:"port,omitempty"`
 
-	// Username FTP用户名
+	// Protocol 协议类型
+	Protocol *SyncCompareRequestProtocol `json:"protocol,omitempty"`
+
+	// Username 用户名
 	Username *string `json:"username,omitempty"`
 }
+
+// SyncCompareRequestCompareType 对比类型
+type SyncCompareRequestCompareType string
+
+// SyncCompareRequestProtocol 协议类型
+type SyncCompareRequestProtocol string
 
 // SyncCompareResponse defines model for SyncCompareResponse.
 type SyncCompareResponse struct {
@@ -479,27 +599,39 @@ type SyncCompareResponse struct {
 
 // SyncExecuteRequest defines model for SyncExecuteRequest.
 type SyncExecuteRequest struct {
-	// Directory FTP目录路径
+	// CompareType 同步类型
+	CompareType *SyncExecuteRequestCompareType `json:"compare_type,omitempty"`
+
+	// Directory 远程目录路径
 	Directory *string `json:"directory,omitempty"`
 
-	// Ip FTP IP地址
+	// Ip 服务器IP地址
 	Ip *string `json:"ip,omitempty"`
 
-	// Password FTP密码
+	// Password 密码
 	Password *string `json:"password,omitempty"`
 
-	// Port FTP端口号
+	// Port 服务器端口号
 	Port *int `json:"port,omitempty"`
 
-	// ToDownload 待下载的音频文件列表
+	// Protocol 协议类型
+	Protocol *SyncExecuteRequestProtocol `json:"protocol,omitempty"`
+
+	// ToDownload 待下载的文件列表
 	ToDownload *[]string `json:"to_download,omitempty"`
 
-	// ToUpload 待上传的音频文件列表
+	// ToUpload 待上传的文件列表
 	ToUpload *[]string `json:"to_upload,omitempty"`
 
-	// Username FTP用户名
+	// Username 用户名
 	Username *string `json:"username,omitempty"`
 }
+
+// SyncExecuteRequestCompareType 同步类型
+type SyncExecuteRequestCompareType string
+
+// SyncExecuteRequestProtocol 协议类型
+type SyncExecuteRequestProtocol string
 
 // SyncExecuteResponse defines model for SyncExecuteResponse.
 type SyncExecuteResponse struct {
@@ -512,18 +644,24 @@ type SyncExecuteResponse struct {
 
 // SyncTestConnectionRequest defines model for SyncTestConnectionRequest.
 type SyncTestConnectionRequest struct {
-	// Ip FTP IP地址
+	// Ip 服务器IP地址
 	Ip *string `json:"ip,omitempty"`
 
-	// Password FTP密码
+	// Password 密码
 	Password *string `json:"password,omitempty"`
 
-	// Port FTP端口号
+	// Port 服务器端口号
 	Port *int `json:"port,omitempty"`
 
-	// Username FTP用户名
+	// Protocol 协议类型
+	Protocol *SyncTestConnectionRequestProtocol `json:"protocol,omitempty"`
+
+	// Username 用户名
 	Username *string `json:"username,omitempty"`
 }
+
+// SyncTestConnectionRequestProtocol 协议类型
+type SyncTestConnectionRequestProtocol string
 
 // SyncTestConnectionResponse defines model for SyncTestConnectionResponse.
 type SyncTestConnectionResponse struct {
@@ -629,15 +767,6 @@ type GetAudioSourceParams struct {
 	Id int `form:"id" json:"id"`
 }
 
-// SyncBrowseParams defines parameters for SyncBrowse.
-type SyncBrowseParams struct {
-	Directory *string `form:"directory,omitempty" json:"directory,omitempty"`
-	Ip        *string `form:"ip,omitempty" json:"ip,omitempty"`
-	Port      *int    `form:"port,omitempty" json:"port,omitempty"`
-	Username  *string `form:"username,omitempty" json:"username,omitempty"`
-	Password  *string `form:"password,omitempty" json:"password,omitempty"`
-}
-
 // UploadAudioMultipartBody defines parameters for UploadAudio.
 type UploadAudioMultipartBody struct {
 	// File 音频文件
@@ -663,6 +792,29 @@ type SearchImageParamsSortBy string
 // SearchImageParamsSortOrder defines parameters for SearchImage.
 type SearchImageParamsSortOrder string
 
+// GetImageSourceParams defines parameters for GetImageSource.
+type GetImageSourceParams struct {
+	Id int `form:"id" json:"id"`
+}
+
+// GetImageThumbParams defines parameters for GetImageThumb.
+type GetImageThumbParams struct {
+	Id int `form:"id" json:"id"`
+}
+
+// SyncBrowseParams defines parameters for SyncBrowse.
+type SyncBrowseParams struct {
+	Directory *string                   `form:"directory,omitempty" json:"directory,omitempty"`
+	Ip        *string                   `form:"ip,omitempty" json:"ip,omitempty"`
+	Port      *int                      `form:"port,omitempty" json:"port,omitempty"`
+	Username  *string                   `form:"username,omitempty" json:"username,omitempty"`
+	Password  *string                   `form:"password,omitempty" json:"password,omitempty"`
+	Protocol  *SyncBrowseParamsProtocol `form:"protocol,omitempty" json:"protocol,omitempty"`
+}
+
+// SyncBrowseParamsProtocol defines parameters for SyncBrowse.
+type SyncBrowseParamsProtocol string
+
 // DeleteAudioJSONRequestBody defines body for DeleteAudio for application/json ContentType.
 type DeleteAudioJSONRequestBody = DeleteAudioRequest
 
@@ -675,15 +827,6 @@ type UploadLyricMultipartRequestBody UploadLyricMultipartBody
 // RestoreAudioJSONRequestBody defines body for RestoreAudio for application/json ContentType.
 type RestoreAudioJSONRequestBody = RestoreAudioRequest
 
-// SyncCompareJSONRequestBody defines body for SyncCompare for application/json ContentType.
-type SyncCompareJSONRequestBody = SyncCompareRequest
-
-// SyncExecuteJSONRequestBody defines body for SyncExecute for application/json ContentType.
-type SyncExecuteJSONRequestBody = SyncExecuteRequest
-
-// SyncTestConnectionJSONRequestBody defines body for SyncTestConnection for application/json ContentType.
-type SyncTestConnectionJSONRequestBody = SyncTestConnectionRequest
-
 // UpdateAudioJSONRequestBody defines body for UpdateAudio for application/json ContentType.
 type UpdateAudioJSONRequestBody = UpdateAudioRequest
 
@@ -692,3 +835,12 @@ type UploadAudioMultipartRequestBody UploadAudioMultipartBody
 
 // SetConfigJSONRequestBody defines body for SetConfig for application/json ContentType.
 type SetConfigJSONRequestBody = SetConfigRequest
+
+// SyncCompareJSONRequestBody defines body for SyncCompare for application/json ContentType.
+type SyncCompareJSONRequestBody = SyncCompareRequest
+
+// SyncExecuteJSONRequestBody defines body for SyncExecute for application/json ContentType.
+type SyncExecuteJSONRequestBody = SyncExecuteRequest
+
+// SyncTestConnectionJSONRequestBody defines body for SyncTestConnection for application/json ContentType.
+type SyncTestConnectionJSONRequestBody = SyncTestConnectionRequest

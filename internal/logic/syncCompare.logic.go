@@ -42,17 +42,12 @@ func (l *SyncCompareLogic) SyncCompare(req *generated.SyncCompareRequest) (*gene
 		return nil, err
 	}
 
-	// 获取本地音频文件列表
-	audios, err := l.Repo.GetAllAudio()
+	localMap, err := l.getLocalFileMap(req.CompareType)
 	if err != nil {
 		return nil, err
 	}
-	localMap := make(map[string]string)
-	for _, audio := range audios {
-		localMap[filepath.Base(audio.FilePath)] = audio.FilePath
-	}
 
-	// 获取ftp音频文件列表
+	// 获取ftp文件列表
 	remoteMap := make(map[string]struct{})
 	for _, entry := range entries {
 		if entry.Type == ftp.EntryTypeFolder {
@@ -79,7 +74,9 @@ func (l *SyncCompareLogic) SyncCompare(req *generated.SyncCompareRequest) (*gene
 
 	for fileName := range remoteMap {
 		if _, ok := localMap[fileName]; !ok {
-			toDownload = append(toDownload, fileName)
+			if isSupportedFile(fileName, req.CompareType) {
+				toDownload = append(toDownload, fileName)
+			}
 		}
 	}
 
@@ -98,4 +95,48 @@ func (l *SyncCompareLogic) SyncCompare(req *generated.SyncCompareRequest) (*gene
 			Unchanged:  &unchanged,
 		},
 	}, nil
+}
+
+var audioExts = map[string]bool{
+	".mp3":  true,
+	".flac": true,
+}
+
+var imageExts = map[string]bool{
+	".jpg":  true,
+	".jpeg": true,
+	".png":  true,
+	".heic": true,
+}
+
+func isSupportedFile(fileName string, compareType *generated.SyncCompareRequestCompareType) bool {
+	ext := filepath.Ext(fileName)
+	if compareType != nil && *compareType == generated.SyncCompareRequestCompareTypeImage {
+		return imageExts[ext]
+	}
+	return audioExts[ext]
+}
+
+func (l *SyncCompareLogic) getLocalFileMap(compareType *generated.SyncCompareRequestCompareType) (map[string]string, error) {
+	localMap := make(map[string]string)
+
+	if compareType != nil && *compareType == generated.SyncCompareRequestCompareTypeImage {
+		images, err := l.Repo.GetAllImage()
+		if err != nil {
+			return nil, err
+		}
+		for _, img := range images {
+			localMap[filepath.Base(img.FilePath)] = img.FilePath
+		}
+		return localMap, nil
+	}
+
+	audios, err := l.Repo.GetAllAudio()
+	if err != nil {
+		return nil, err
+	}
+	for _, audio := range audios {
+		localMap[filepath.Base(audio.FilePath)] = audio.FilePath
+	}
+	return localMap, nil
 }

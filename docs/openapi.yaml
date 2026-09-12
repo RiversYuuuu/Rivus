@@ -368,7 +368,7 @@ paths:
           description: 获取成功
           content:
             text/plain: {}
-  /audio/sync/test-connection:
+  /sync/test-connection:
     post:
       operationId: SyncTestConnection
       description: 测试FTP连接与凭据是否有效
@@ -385,7 +385,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncTestConnectionResponse'
-  /audio/sync/browse:
+  /sync/browse:
     get:
       operationId: SyncBrowse
       description: 浏览FTP服务器目录
@@ -427,10 +427,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncBrowseResponse'
-  /audio/sync/compare:
+  /sync/compare:
     post:
       operationId: SyncCompare
-      description: 对比本地音频文件与FTP服务器音频文件
+      description: 对比本地文件与FTP服务器文件
       requestBody:
         required: true
         content:
@@ -444,7 +444,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncCompareResponse'
-  /audio/sync/execute:
+  /sync/execute:
     post:
       operationId: SyncExecute
       description: 执行同步操作
@@ -517,7 +517,44 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchImageResponse'    
+                $ref: '#/components/schemas/SearchImageResponse'
+  /image/source:
+    get:
+      x-codegen-skip: true
+      operationId: GetImageSource
+      summary: 获取图片
+      description: 获取图片
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 图片ID
+          required: true
+      responses:
+        '200':
+          content:
+            image/jpeg: {}
+  /image/thumb:
+    get:
+      x-codegen-skip: true
+      operationId: GetImageThumb
+      summary: 获取图片缩略图
+      description: 获取图片缩略图
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 图片ID
+          required: true
+      responses:
+        '200':
+          content:
+            image/*: {}
+
 components:
   schemas:
     PingResponse:
@@ -877,6 +914,11 @@ components:
         directory:
           type: string
           description: FTP目录路径
+        compare_type:
+          type: string
+          enum: [audio, image]
+          description: 对比类型
+
     SyncCompareResponse:
       type: object
       required: [code, message]
@@ -926,16 +968,20 @@ components:
         directory:
           type: string
           description: FTP目录路径
+        compare_type:
+          type: string
+          enum: [audio, image]
+          description: 同步类型
         to_download:
           type: array
           items:
             type: string
-          description: 待下载的音频文件列表
+          description: 待下载的文件列表
         to_upload:
           type: array
           items:
             type: string
-          description: 待上传的音频文件列表
+          description: 待上传的文件列表
     SyncExecuteResponse:
       type: object
       required: [code, message]

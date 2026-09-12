@@ -59,11 +59,22 @@ func (l *SyncExecuteLogic) SyncExecute(req *generated.SyncExecuteRequest) (*gene
 
 	// 下载文件
 	if req.ToDownload != nil && len(*req.ToDownload) > 0 {
-		config, err := l.Repo.GetConfig()
+		localDir, err := l.getLocalDir(req.CompareType)
 		if err != nil {
 			return nil, err
 		}
-		audioDir := config.AudioDir
+
+		// 一次性获取远程目录文件列表，用于读取原始 mtime
+		entries, err := conn.List(*req.Directory)
+		if err != nil {
+			return nil, err
+		}
+		remoteMtimeMap := make(map[string]time.Time)
+		for _, e := range entries {
+			if e.Type == ftp.EntryTypeFile {
+				remoteMtimeMap[e.Name] = e.Time
+			}
+		}
 
 		for _, fileName := range *req.ToDownload {
 			err := func() error {
@@ -73,15 +84,26 @@ func (l *SyncExecuteLogic) SyncExecute(req *generated.SyncExecuteRequest) (*gene
 					return err
 				}
 				defer reader.Close()
-				localPath := filepath.Join(audioDir, fileName)
+
+				localPath := filepath.Join(localDir, fileName)
 				localFile, err := os.Create(localPath)
 				if err != nil {
 					return err
 				}
-				defer localFile.Close()
 				_, err = io.Copy(localFile, reader)
+				closeErr := localFile.Close()
 				if err != nil {
 					return err
+				}
+				if closeErr != nil {
+					return closeErr
+				}
+
+				if remoteMtime, ok := remoteMtimeMap[fileName]; ok {
+					err = os.Chtimes(localPath, remoteMtime, remoteMtime)
+					if err != nil {
+						return err
+					}
 				}
 				return nil
 			}()
@@ -95,4 +117,17 @@ func (l *SyncExecuteLogic) SyncExecute(req *generated.SyncExecuteRequest) (*gene
 		Code:    0,
 		Message: "success",
 	}, nil
+}
+
+func (l *SyncExecuteLogic) getLocalDir(compareType *generated.SyncExecuteRequestCompareType) (string, error) {
+	config, err := l.Repo.GetConfig()
+	if err != nil {
+		return "", err
+	}
+
+	if compareType != nil && *compareType == generated.SyncExecuteRequestCompareTypeImage {
+		return config.ImageDir, nil
+	}
+
+	return config.AudioDir, nil
 }

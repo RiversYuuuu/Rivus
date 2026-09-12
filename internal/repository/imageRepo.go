@@ -42,6 +42,24 @@ func (r *Repository) CountImage(condition model.SearchImageCondition) (int64, er
 	return count, err
 }
 
+func (r *Repository) GetImageByID(imageID uint) (*model.Image, error) {
+	var image model.Image
+	if err := r.DB.Where("ID = ?", imageID).First(&image).Error; err != nil {
+		return nil, err
+	}
+	return &image, nil
+}
+
+func (r *Repository) UpdateImageThumbPath(imageID uint, thumbPath string) error {
+	return r.DB.Model(&model.Image{}).Where("ID = ?", imageID).Update("thumb_path", thumbPath).Error
+}
+
+func (r *Repository) GetAllImage() ([]model.Image, error) {
+	var images []model.Image
+	err := r.DB.Find(&images).Error
+	return images, err
+}
+
 func applySearchImageCondition(query *gorm.DB, condition model.SearchImageCondition) *gorm.DB {
 	var conditions []string
 	var args []interface{}
