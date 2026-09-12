@@ -461,8 +461,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncExecuteResponse'
-    
-
+  /image/scan:
+    get:
+      operationId: ScanImage
+      summary: 扫描图片目录，构建图片元数据
+      description: 根据文件存储目录初始化服务数据
+      responses:
+        '200':
+          description: 扫描成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanImageResponse'
+  /image/search:
+    get:
+      operationId: SearchImage
+      summary: 搜索图片
+      description: 根据图片元数据搜索图片
+      parameters:
+        # 分页参数
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 页码，默认第一页
+          required: false
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+            description: 每页数量，默认10条
+          required: false
+        # 排序参数
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [shot_at, file_size]
+            default: shot_at
+            description: 排序字段，默认按拍摄时间排序
+          required: false
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+            description: 排序顺序，默认升序
+          required: false          
+      responses:
+        '200':
+          description: 搜索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchImageResponse'    
 components:
   schemas:
     PingResponse:
@@ -891,3 +946,90 @@ components:
         message:
           type: string
           example: success
+    ImageItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 图片ID
+          example: 1
+        create_time:
+          type: string
+          description: 创建时间
+        update_time:
+          type: string
+          description: 更新时间
+        delete_time:
+          type: string
+          description: 删除时间
+        file_path:
+          type: string
+          description: 文件路径
+          example: /path/to/image.jpg
+        file_ext:
+          type: string
+          description: 文件格式
+          example: jpg
+        file_size:
+          type: integer
+          description: 文件字节大小
+          example: 1024
+        file_md5:
+          type: string
+          description: 文件哈希值
+          example: 1234567890abcdef1234567890abcdef
+        width:
+          type: integer
+          description: 宽度（像素）
+          example: 1024
+        height:
+          type: integer
+          description: 高度（像素）
+          example: 768
+        shot_at:
+          type: string
+          description: 拍摄时间
+          example: 2023-01-01T12:00:00Z
+        orientation:
+          type: integer
+          description: 朝向（1-8，对应EXIF标准，用于自动转正）
+          example: 1
+        latitude:
+          type: number
+          format: double
+          description: 纬度
+          example: 39.9042
+        longitude:
+          type: number
+          format: double
+          description: 经度
+          example: 116.4074
+    ScanImageResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    SearchImageResponse:
+      type: object
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            image_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImageItem'
+            pagination:
+              $ref: '#/components/schemas/Pagination'

@@ -15,7 +15,7 @@ func (r *Repository) SearchAudio(condition model.SearchAudioCondition) ([]model.
 
 	query := r.DB.Model(&model.Audio{})
 
-	query = applySearchCondition(query, condition)
+	query = applySearchAudioCondition(query, condition)
 
 	// 排序条件
 	if condition.SortBy != "" {
@@ -35,14 +35,14 @@ func (r *Repository) CountAudio(condition model.SearchAudioCondition) (int64, er
 	var count int64
 
 	query := r.DB.Model(&model.Audio{})
-	query = applySearchCondition(query, condition)
+	query = applySearchAudioCondition(query, condition)
 
 	err := query.Count(&count).Error
 
 	return count, err
 }
 
-func applySearchCondition(query *gorm.DB, condition model.SearchAudioCondition) *gorm.DB {
+func applySearchAudioCondition(query *gorm.DB, condition model.SearchAudioCondition) *gorm.DB {
 	var conditions []string
 	var args []interface{}
 

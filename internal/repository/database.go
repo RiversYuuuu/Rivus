@@ -19,6 +19,7 @@ func NewRepository(dbPath string) (*Repository, error) {
 
 	db.AutoMigrate(&model.Config{})
 	db.AutoMigrate(&model.Audio{})
+	db.AutoMigrate(&model.Image{})
 
 	return &Repository{DB: db}, nil
 }

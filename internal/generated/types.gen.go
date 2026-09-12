@@ -79,6 +79,42 @@ func (e SearchAudioParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for SearchImageParamsSortBy.
+const (
+	FileSize SearchImageParamsSortBy = "file_size"
+	ShotAt   SearchImageParamsSortBy = "shot_at"
+)
+
+// Valid indicates whether the value is a known member of the SearchImageParamsSortBy enum.
+func (e SearchImageParamsSortBy) Valid() bool {
+	switch e {
+	case FileSize:
+		return true
+	case ShotAt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchImageParamsSortOrder.
+const (
+	SearchImageParamsSortOrderAsc  SearchImageParamsSortOrder = "asc"
+	SearchImageParamsSortOrderDesc SearchImageParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the SearchImageParamsSortOrder enum.
+func (e SearchImageParamsSortOrder) Valid() bool {
+	switch e {
+	case SearchImageParamsSortOrderAsc:
+		return true
+	case SearchImageParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // AudioItem defines model for AudioItem.
 type AudioItem struct {
 	// Album 专辑
@@ -210,6 +246,73 @@ type GetRecycleBinResponse struct {
 	Message string `json:"message"`
 }
 
+// ImageItem defines model for ImageItem.
+type ImageItem struct {
+	// CreateTime 创建时间
+	CreateTime *string `json:"create_time,omitempty"`
+
+	// DeleteTime 删除时间
+	DeleteTime *string `json:"delete_time,omitempty"`
+
+	// FileExt 文件格式
+	//
+	// Example: jpg
+	FileExt *string `json:"file_ext,omitempty"`
+
+	// FileMd5 文件哈希值
+	//
+	// Example: 1234567890abcdef1234567890abcdef
+	FileMd5 *string `json:"file_md5,omitempty"`
+
+	// FilePath 文件路径
+	//
+	// Example: /path/to/image.jpg
+	FilePath *string `json:"file_path,omitempty"`
+
+	// FileSize 文件字节大小
+	//
+	// Example: 1024
+	FileSize *int `json:"file_size,omitempty"`
+
+	// Height 高度（像素）
+	//
+	// Example: 768
+	Height *int `json:"height,omitempty"`
+
+	// Id 图片ID
+	//
+	// Example: 1
+	Id *int `json:"id,omitempty"`
+
+	// Latitude 纬度
+	//
+	// Example: 39.9042
+	Latitude *float64 `json:"latitude,omitempty"`
+
+	// Longitude 经度
+	//
+	// Example: 116.4074
+	Longitude *float64 `json:"longitude,omitempty"`
+
+	// Orientation 朝向（1-8，对应EXIF标准，用于自动转正）
+	//
+	// Example: 1
+	Orientation *int `json:"orientation,omitempty"`
+
+	// ShotAt 拍摄时间
+	//
+	// Example: 2023-01-01T12:00:00Z
+	ShotAt *string `json:"shot_at,omitempty"`
+
+	// UpdateTime 更新时间
+	UpdateTime *string `json:"update_time,omitempty"`
+
+	// Width 宽度（像素）
+	//
+	// Example: 1024
+	Width *int `json:"width,omitempty"`
+}
+
 // Pagination defines model for Pagination.
 type Pagination struct {
 	Page     *int `json:"page,omitempty"`
@@ -255,6 +358,15 @@ type ScanAudioResponse struct {
 	Message string `json:"message"`
 }
 
+// ScanImageResponse defines model for ScanImageResponse.
+type ScanImageResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // ScrapeAudioResponse defines model for ScrapeAudioResponse.
 type ScrapeAudioResponse struct {
 	// Code Example: 0
@@ -280,6 +392,19 @@ type SearchAudioResponse struct {
 	Code int `json:"code"`
 	Data struct {
 		AudioList  *[]AudioItem `json:"audio_list,omitempty"`
+		Pagination *Pagination  `json:"pagination,omitempty"`
+	} `json:"data"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// SearchImageResponse defines model for SearchImageResponse.
+type SearchImageResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data struct {
+		ImageList  *[]ImageItem `json:"image_list,omitempty"`
 		Pagination *Pagination  `json:"pagination,omitempty"`
 	} `json:"data"`
 
@@ -523,6 +648,20 @@ type UploadAudioMultipartBody struct {
 type BrowseParams struct {
 	Directory *string `form:"directory,omitempty" json:"directory,omitempty"`
 }
+
+// SearchImageParams defines parameters for SearchImage.
+type SearchImageParams struct {
+	Page      *int                        `form:"page,omitempty" json:"page,omitempty"`
+	PageSize  *int                        `form:"page_size,omitempty" json:"page_size,omitempty"`
+	SortBy    *SearchImageParamsSortBy    `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+	SortOrder *SearchImageParamsSortOrder `form:"sort_order,omitempty" json:"sort_order,omitempty"`
+}
+
+// SearchImageParamsSortBy defines parameters for SearchImage.
+type SearchImageParamsSortBy string
+
+// SearchImageParamsSortOrder defines parameters for SearchImage.
+type SearchImageParamsSortOrder string
 
 // DeleteAudioJSONRequestBody defines body for DeleteAudio for application/json ContentType.
 type DeleteAudioJSONRequestBody = DeleteAudioRequest

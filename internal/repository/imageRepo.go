@@ -1,0 +1,66 @@
+package repository
+
+import (
+	"Rivus/internal/model"
+
+	"gorm.io/gorm"
+)
+
+func (r *Repository) CreateImage(image *model.Image) error {
+	return r.DB.Create(image).Error
+}
+
+func (r *Repository) SearchImage(condition model.SearchImageCondition) ([]model.Image, error) {
+	var images []model.Image
+
+	query := r.DB.Model(&model.Image{})
+
+	query = applySearchImageCondition(query, condition)
+
+	// 排序条件
+	if condition.SortBy != "" {
+		query = query.Order(condition.SortBy + " " + condition.SortOrder)
+	} else {
+		query = query.Order("shot_at DESC")
+	}
+
+	// 分页条件
+	offset := (condition.Page - 1) * condition.PageSize
+	err := query.Offset(offset).Limit(condition.PageSize).Find(&images).Error
+
+	return images, err
+}
+
+func (r *Repository) CountImage(condition model.SearchImageCondition) (int64, error) {
+	var count int64
+
+	query := r.DB.Model(&model.Image{})
+
+	query = applySearchImageCondition(query, condition)
+	err := query.Count(&count).Error
+
+	return count, err
+}
+
+func applySearchImageCondition(query *gorm.DB, condition model.SearchImageCondition) *gorm.DB {
+	var conditions []string
+	var args []interface{}
+
+	if condition.MD5 != "" {
+		conditions = append(conditions, "md5 = ?")
+		args = append(args, condition.MD5)
+	}
+
+	if len(conditions) > 0 {
+		joined := ""
+		for i, c := range conditions {
+			if i > 0 {
+				joined += " OR "
+			}
+			joined += "(" + c + ")"
+		}
+		query = query.Where(joined, args...)
+	}
+
+	return query
+}

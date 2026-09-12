@@ -70,6 +70,12 @@ type ServerInterface interface {
 	// SetConfig 配置接口
 	// (POST /config)
 	SetConfig(c *gin.Context)
+	// ScanImage 扫描图片目录，构建图片元数据
+	// (GET /image/scan)
+	ScanImage(c *gin.Context)
+	// SearchImage 搜索图片
+	// (GET /image/search)
+	SearchImage(c *gin.Context, params SearchImageParams)
 	// Ping 健康检查接口
 	// (GET /ping)
 	Ping(c *gin.Context)
@@ -539,6 +545,70 @@ func (siw *ServerInterfaceWrapper) SetConfig(c *gin.Context) {
 	siw.Handler.SetConfig(c)
 }
 
+// ScanImage operation middleware
+func (siw *ServerInterfaceWrapper) ScanImage(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ScanImage(c)
+}
+
+// SearchImage operation middleware
+func (siw *ServerInterfaceWrapper) SearchImage(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchImageParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page_size: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_by" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_by", c.Request.URL.Query(), &params.SortBy, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_by: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_order" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_order", c.Request.URL.Query(), &params.SortOrder, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_order: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SearchImage(c, params)
+}
+
 // Ping operation middleware
 func (siw *ServerInterfaceWrapper) Ping(c *gin.Context) {
 
@@ -599,4 +669,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/audio/sync/browse", wrapper.SyncBrowse)
 	router.POST(options.BaseURL+"/audio/sync/compare", wrapper.SyncCompare)
 	router.POST(options.BaseURL+"/audio/sync/execute", wrapper.SyncExecute)
+	router.GET(options.BaseURL+"/image/scan", wrapper.ScanImage)
+	router.GET(options.BaseURL+"/image/search", wrapper.SearchImage)
 }
