@@ -1,4 +1,4 @@
-.PHONY: gen gen-type gen-server gen-handler gen-logic run
+.PHONY: gen gen-type gen-server gen-handler gen-logic run icon build
 
 gen: gen-type gen-server gen-handler gen-logic
 
@@ -23,3 +23,9 @@ gen-logic:
 run:
 	go mod tidy
 	go run main.go
+
+icon:
+	go run github.com/akavel/rsrc@latest -ico icon.ico -o rsrc.syso
+
+build: icon
+	go build -ldflags="-H windowsgui -s -w" -o Rivus.exe

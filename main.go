@@ -2,9 +2,13 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
+	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
 
@@ -15,6 +19,16 @@ import (
 )
 
 func main() {
+	addr := "localhost:8080"
+
+	conn, err := net.Dial("tcp", addr)
+	if err == nil {
+		conn.Close()
+		openBrowser("http://" + addr)
+		fmt.Println("Rivus 已在运行，直接打开浏览器")
+		return
+	}
+
 	// 获取用户主目录路径
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -72,5 +86,19 @@ func main() {
 	})
 
 	logger.Info("服务启动", "port", ":8080")
+	openBrowser("http://" + addr)
 	r.Run(":8080")
+}
+
+func openBrowser(url string) {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	default:
+		cmd = exec.Command("xdg-open", url)
+	}
+	cmd.Start()
 }
