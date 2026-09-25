@@ -58,7 +58,6 @@ body:has(#screenImage)::before{background:radial-gradient(900px 520px at 6% -8%,
 .photo-cell:hover img{transform:scale(1.06)}
 .photo-cell .photo-ext{position:absolute;bottom:4px;right:4px;font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:9px;color:var(--ink3);background:rgba(0,0,0,.55);border-radius:4px;padding:1px 5px;letter-spacing:.06em;text-transform:uppercase;pointer-events:none}
 .photo-cell .photo-check{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s,background .2s;cursor:pointer;z-index:3}
-.photo-cell:hover .photo-check{opacity:1}
 .photo-cell .photo-check.checked{background:var(--green);border-color:var(--green);opacity:1}
 .photo-cell .photo-check.checked svg{opacity:1}
 .photo-cell .photo-check svg{width:12px;height:12px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
@@ -111,3 +110,33 @@ body:has(#screenImage)::before{background:radial-gradient(900px 520px at 6% -8%,
   .img-stats{flex-direction:column}
   .img-stat{min-width:auto}
 }
+
+/* ---------- tabs ---------- */
+.img-tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:16px}
+.img-tab{border:none;background:none;color:var(--ink3);font-size:14px;font-weight:500;padding:10px 18px 12px;position:relative;display:flex;align-items:center;gap:8px;transition:color .2s;cursor:pointer}
+.img-tab:hover{color:var(--ink)}
+.img-tab::after{content:'';position:absolute;left:12px;right:12px;bottom:-2px;height:2.5px;background:var(--green);border-radius:2px;transform:scaleX(0);transition:transform .28s cubic-bezier(.3,1.2,.4,1)}
+.img-tab.on{color:var(--ink);font-weight:700}
+.img-tab.on::after{transform:scaleX(1)}
+.img-tab .cnt{font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:11px;background:var(--bg3);border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--ink2)}
+.img-tab.on .cnt{background:var(--markG);border-color:var(--green);color:var(--green)}
+
+/* ---------- photo actions (recycle bin) ---------- */
+.photo-actions{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:4;opacity:0;transition:opacity .2s}
+.photo-cell:hover .photo-actions{opacity:1}
+.photo-act{width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .15s}
+.photo-act:hover{transform:scale(1.1)}
+.restore-btn:hover{background:var(--green)}
+.purge-btn:hover{background:var(--rose)}
+.delete-btn:hover{background:var(--rose)}
+.photo-act .ic{width:14px;height:14px}
+
+.batch-mode .photo-actions{display:none !important}
+
+/* ---------- delete time ---------- */
+.photo-delete-time{position:absolute;bottom:4px;left:4px;font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:9px;color:var(--rose);background:rgba(0,0,0,.55);border-radius:4px;padding:1px 5px;pointer-events:none;z-index:3}
+.photo-cell:hover .photo-delete-time{opacity:0;transition:opacity .15s}
+
+/* ---------- btn-danger ---------- */
+.btn-danger{border-color:var(--rose);color:var(--rose)}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,.1);color:var(--rose);border-color:var(--rose)}

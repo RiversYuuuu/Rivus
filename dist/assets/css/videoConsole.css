@@ -66,7 +66,6 @@ body:has(#screenVideo)::before{background:radial-gradient(900px 520px at 6% -8%,
 .video-meta .vm-res{color:var(--orange)}
 .video-ext{position:absolute;bottom:4px;right:4px;font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:9px;color:var(--ink3);background:rgba(0,0,0,.55);border-radius:4px;padding:1px 5px;letter-spacing:.06em;text-transform:uppercase;pointer-events:none}
 .video-cell .video-check{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s,background .2s;cursor:pointer;z-index:3}
-.video-cell:hover .video-check{opacity:1}
 .video-cell .video-check.checked{background:var(--orange);border-color:var(--orange);opacity:1}
 .video-cell .video-check.checked svg{opacity:1}
 .video-cell .video-check svg{width:12px;height:12px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
@@ -116,6 +115,40 @@ body:has(#screenVideo)::before{background:radial-gradient(900px 520px at 6% -8%,
 .video-empty h3{font-family:'ZCOOL QingKe HuangYou','Noto Sans SC','Microsoft YaHei',sans-serif;font-weight:400;font-size:22px;color:var(--ink2);margin-bottom:8px}
 .video-empty p{font-size:14px;line-height:1.7}
 
+/* ---------- tabs ---------- */
+.img-tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:16px}
+.img-tab{border:none;background:none;color:var(--ink3);font-size:14px;font-weight:500;padding:10px 18px 12px;position:relative;display:flex;align-items:center;gap:8px;transition:color .2s;cursor:pointer}
+.img-tab:hover{color:var(--ink)}
+.img-tab::after{content:'';position:absolute;left:12px;right:12px;bottom:-2px;height:2.5px;background:var(--orange);border-radius:2px;transform:scaleX(0);transition:transform .28s cubic-bezier(.3,1.2,.4,1)}
+.img-tab.on{color:var(--ink);font-weight:700}
+.img-tab.on::after{transform:scaleX(1)}
+.img-tab .cnt{font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:11px;background:var(--bg3);border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--ink2)}
+.img-tab.on .cnt{background:var(--markO);border-color:var(--orange);color:var(--orange)}
+
+/* ---------- video actions (recycle bin) ---------- */
+.video-actions{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:4;opacity:0;transition:opacity .2s}
+.video-cell:hover .video-actions{opacity:1}
+.video-act{width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .15s}
+.video-act:hover{transform:scale(1.1)}
+.video-act .ic{width:14px;height:14px}
+.restore-btn:hover{background:var(--orange)}
+.purge-btn:hover{background:var(--rose)}
+.delete-btn:hover{background:var(--rose)}
+
+.batch-mode .video-actions{display:none !important}
+
+/* ---------- delete time ---------- */
+.video-delete-time{font-size:11px;color:var(--rose);font-family:'JetBrains Mono','Cascadia Code',monospace;margin-top:4px}
+
+/* ---------- btn-danger ---------- */
+.btn-danger{border-color:var(--rose);color:var(--rose)}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,.1);color:var(--rose);border-color:var(--rose)}
+
+/* ---------- bin batch bar ---------- */
+#videoBinBatchBar .btn-outline{background:transparent;border-color:var(--orange);color:var(--orange)}
+#videoBinBatchBar .btn-outline:hover:not(:disabled){background:var(--markO);color:var(--orange)}
+
+/* ---------- responsive ---------- */
 @media (max-width:720px){
   .video-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:6px}
   .video-stats{flex-direction:column}

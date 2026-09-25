@@ -82,3 +82,56 @@ func applySearchImageCondition(query *gorm.DB, condition model.SearchImageCondit
 
 	return query
 }
+
+func (r *Repository) SoftDeleteImageByID(imageID uint) error {
+	return r.DB.Delete(&model.Image{}, imageID).Error
+}
+
+func (r *Repository) HardDeleteImageByID(imageID uint) error {
+	return r.DB.Unscoped().Delete(&model.Image{}, imageID).Error
+}
+
+func (r *Repository) RestoreImageByID(imageID uint) error {
+	return r.DB.Unscoped().Model(&model.Image{}).Where("ID = ?", imageID).Update("deleted_at", nil).Error
+}
+
+func (r *Repository) SearchImageFromRecycleBin(condition model.SearchImageCondition) ([]model.Image, error) {
+	var images []model.Image
+
+	query := r.DB.Unscoped().Model(&model.Image{})
+
+	query = query.Where("deleted_at IS NOT NULL")
+
+	// 排序条件
+	if condition.SortBy != "" {
+		query = query.Order(condition.SortBy + " " + condition.SortOrder)
+	} else {
+		query = query.Order("shot_at DESC")
+	}
+
+	// 分页条件
+	offset := (condition.Page - 1) * condition.PageSize
+	err := query.Offset(offset).Limit(condition.PageSize).Find(&images).Error
+
+	return images, err
+}
+
+func (r *Repository) CountImageFromRecycleBin(condition model.SearchImageCondition) (int64, error) {
+	var count int64
+
+	query := r.DB.Unscoped().Model(&model.Image{})
+
+	query = query.Where("deleted_at IS NOT NULL")
+
+	err := query.Count(&count).Error
+
+	return count, err
+}
+
+func (r *Repository) GetImageByIDFromRecycleBin(imageID uint) (*model.Image, error) {
+	var image model.Image
+	if err := r.DB.Unscoped().Where("ID = ? AND deleted_at IS NOT NULL", imageID).First(&image).Error; err != nil {
+		return nil, err
+	}
+	return &image, nil
+}

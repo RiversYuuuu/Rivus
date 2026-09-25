@@ -4,12 +4,19 @@
 
 const imgState = {
   images: [],
+  binImages: [],
   filtered: [],
   selected: new Set(),
   batchMode: false,
+  isBin: false,
   currentLbIndex: -1,
   sortBy: 'date',
   sortOrder: 'desc',
+  binSortBy: 'shot_at',
+  binSortOrder: 'desc',
+  binPage: 1,
+  binPageSize: 10,
+  binTotal: 0,
 };
 
 const lazyLoader = new IntersectionObserver((entries) => {
@@ -38,6 +45,7 @@ function imgInit() {
   initTheme();
   imgBindEvents();
   loadImages();
+  loadBinCount();
 }
 
 function imgBindEvents() {
@@ -79,10 +87,54 @@ function imgBindEvents() {
     $('#sortMenu').classList.add('hidden');
   });
 
+  // Tab switching
+  $$('.img-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      $$('.img-tab').forEach((t) => t.classList.remove('on'));
+      tab.classList.add('on');
+      if (target === 'bin') {
+        imgState.isBin = true;
+        imgState.batchMode = false;
+        imgState.selected.clear();
+        $('#btnBatchMode').innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
+        $('#btnBatchMode').classList.remove('btn-outline');
+        $('#imgBatchBar').classList.remove('show');
+        $('#imgBinBatchBar').classList.remove('show');
+        $('#imgContent').classList.remove('batch-mode');
+        $$('.photo-check').forEach((el) => {
+          el.classList.remove('checked');
+          el.style.opacity = '0';
+        });
+        loadRecycleBin();
+      } else {
+        imgState.isBin = false;
+        imgState.batchMode = false;
+        imgState.selected.clear();
+        $('#btnBatchMode').innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
+        $('#btnBatchMode').classList.remove('btn-outline');
+        $('#imgBatchBar').classList.remove('show');
+        $('#imgBinBatchBar').classList.remove('show');
+        $('#imgContent').classList.remove('batch-mode');
+        $$('.photo-check').forEach((el) => {
+          el.classList.remove('checked');
+          el.style.opacity = '0';
+        });
+        applyFilter();
+      }
+    });
+  });
+
   $('#btnBatchMode').addEventListener('click', toggleBatchMode);
   $('#btnBatchCancel').addEventListener('click', exitBatchMode);
   $('#btnBatchCheckAll').addEventListener('click', toggleSelectAll);
   $('#btnBatchDelete').addEventListener('click', batchDelete);
+
+  // Bin batch bar events
+  $('#btnBinBatchCheckAll').addEventListener('click', toggleSelectAll);
+  $('#btnBinBatchCancel').addEventListener('click', exitBinBatchMode);
+  $('#btnBinBatchRestore').addEventListener('click', binBatchRestore);
+  $('#btnBinBatchPurge').addEventListener('click', binBatchPurge);
 
   $('#lbClose').addEventListener('click', closeLightbox);
   $('#lbPrev').addEventListener('click', lbPrev);
@@ -118,8 +170,43 @@ async function loadImages() {
   } catch (e) {
     imgState.images = [];
   }
-  applyFilter();
+  if (!imgState.isBin) applyFilter();
   updateStats();
+}
+
+async function loadBinCount() {
+  try {
+    const res = await apiGet('/image/recyclebin', { page: 1, page_size: 1 });
+    if (res.code === 0 && res.data && res.data.pagination) {
+      imgState.binTotal = res.data.pagination.total || 0;
+      $('#cntBin').textContent = imgState.binTotal;
+    }
+  } catch (e) {
+    $('#cntBin').textContent = '0';
+  }
+}
+
+async function loadRecycleBin() {
+  try {
+    const res = await apiGet('/image/recyclebin', {
+      page: imgState.binPage,
+      page_size: imgState.binPageSize,
+      sort_by: imgState.binSortBy,
+      sort_order: imgState.binSortOrder,
+    });
+    if (res.code === 0 && res.data) {
+      imgState.binImages = res.data.image_list || [];
+      if (res.data.pagination) {
+        imgState.binTotal = res.data.pagination.total || 0;
+        $('#cntBin').textContent = imgState.binTotal;
+      }
+    } else {
+      imgState.binImages = [];
+    }
+  } catch (e) {
+    imgState.binImages = [];
+  }
+  renderBinGrid();
 }
 
 function applyFilter() {
@@ -153,6 +240,8 @@ function updateSortUI() {
 function renderGrid() {
   const content = $('#imgContent');
   const empty = $('#imgEmpty');
+  const binEmpty = $('#imgBinEmpty');
+  binEmpty.classList.add('hidden');
 
   if (imgState.filtered.length === 0) {
     content.innerHTML = '';
@@ -176,6 +265,11 @@ function renderGrid() {
         <div class="photo-check${checked}" data-id="${img.id}">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
+        <div class="photo-actions">
+          <button class="photo-act delete-btn" data-id="${img.id}" title="移至回收站">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M16 6v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
         <img data-src="/image/thumb?id=${img.id}" loading="lazy" alt="${esc(imgName(img))}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236d7c90%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22m21 15-5-5L5 21%22/></svg>'">
         ${ext ? `<span class="photo-ext">${esc(ext)}</span>` : ''}
       </div>`;
@@ -188,12 +282,67 @@ function renderGrid() {
   content.querySelectorAll('img[data-src]').forEach((img) => lazyLoader.observe(img));
 }
 
+function renderBinGrid() {
+  const content = $('#imgContent');
+  const empty = $('#imgEmpty');
+  const binEmpty = $('#imgBinEmpty');
+  empty.classList.add('hidden');
+
+  if (imgState.binImages.length === 0) {
+    content.innerHTML = '';
+    binEmpty.classList.remove('hidden');
+    return;
+  }
+
+  binEmpty.classList.add('hidden');
+
+  const groups = groupByDate(imgState.binImages);
+
+  let html = '';
+  for (const [label, imgs] of groups) {
+    html += `<div class="date-group">`;
+    html += `<div class="date-header"><span class="date-label">${esc(label)}</span><span class="date-count">${imgs.length} 张</span></div>`;
+    html += `<div class="photo-grid">`;
+    for (const img of imgs) {
+      const ext = (img.file_ext || '').replace(/^\./, '').toUpperCase();
+      const checked = imgState.selected.has(img.id) ? ' checked' : '';
+      html += `<div class="photo-cell" data-id="${img.id}" data-path="${esc(img.file_path || '')}">
+        <div class="photo-check${checked}" data-id="${img.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="photo-actions">
+          <button class="photo-act restore-btn" data-id="${img.id}" title="恢复">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-7.7L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+          <button class="photo-act purge-btn" data-id="${img.id}" title="彻底删除">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>
+          </button>
+        </div>
+        <img data-src="/image/thumb?id=${img.id}" loading="lazy" alt="${esc(imgName(img))}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236d7c90%22 stroke-width=%221.5%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22m21 15-5-5L5 21%22/></svg>'">
+        ${ext ? `<span class="photo-ext">${esc(ext)}</span>` : ''}
+        ${img.delete_time ? `<span class="photo-delete-time">${esc(img.delete_time.slice(0, 10))}</span>` : ''}
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  content.innerHTML = html;
+  bindBinCellEvents();
+  content.querySelectorAll('img[data-src]').forEach((img) => lazyLoader.observe(img));
+}
+
 function bindCellEvents() {
   $$('.photo-cell').forEach((cell) => {
     cell.addEventListener('click', (e) => {
       if (e.target.closest('.photo-check')) {
         const id = parseInt(e.target.closest('.photo-check').dataset.id);
         toggleSelect(id);
+        return;
+      }
+      if (e.target.closest('.delete-btn')) {
+        e.stopPropagation();
+        const id = parseInt(e.target.closest('.delete-btn').dataset.id);
+        deleteImage(id);
         return;
       }
       if (imgState.batchMode) {
@@ -204,6 +353,35 @@ function bindCellEvents() {
       const id = parseInt(cell.dataset.id);
       const idx = imgState.filtered.findIndex((img) => img.id === id);
       if (idx >= 0) openLightbox(idx);
+    });
+  });
+}
+
+function bindBinCellEvents() {
+  $$('.photo-cell').forEach((cell) => {
+    cell.addEventListener('click', (e) => {
+      if (e.target.closest('.photo-check')) {
+        const id = parseInt(e.target.closest('.photo-check').dataset.id);
+        toggleSelect(id);
+        return;
+      }
+      if (e.target.closest('.restore-btn')) {
+        e.stopPropagation();
+        const id = parseInt(e.target.closest('.restore-btn').dataset.id);
+        restoreImage(id);
+        return;
+      }
+      if (e.target.closest('.purge-btn')) {
+        e.stopPropagation();
+        const id = parseInt(e.target.closest('.purge-btn').dataset.id);
+        purgeImage(id);
+        return;
+      }
+      if (imgState.batchMode) {
+        const id = parseInt(cell.dataset.id);
+        toggleSelect(id);
+        return;
+      }
     });
   });
 }
@@ -255,19 +433,34 @@ function updateStats() {
   $('#isSize').textContent = (totalSize / 1e9).toFixed(2);
   $('#isFormats').textContent = exts.size;
   $('#isDays').textContent = spanDays;
+  $('#cntLib').textContent = total;
 }
 
 /* ---------- batch ---------- */
 function toggleBatchMode() {
   imgState.batchMode = !imgState.batchMode;
   const btn = $('#btnBatchMode');
-  if (imgState.batchMode) {
-    btn.classList.add('btn-outline');
-    btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 退出批量';
-    $('#imgBatchBar').classList.add('show');
-    $$('.photo-check').forEach((el) => el.style.opacity = '1');
+  if (imgState.isBin) {
+    // Bin batch mode
+    if (imgState.batchMode) {
+      btn.classList.add('btn-outline');
+      btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 退出批量';
+      $('#imgBinBatchBar').classList.add('show');
+      $('#imgContent').classList.add('batch-mode');
+      $$('.photo-check').forEach((el) => el.style.opacity = '1');
+    } else {
+      exitBinBatchMode();
+    }
   } else {
-    exitBatchMode();
+    if (imgState.batchMode) {
+      btn.classList.add('btn-outline');
+      btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 退出批量';
+      $('#imgBatchBar').classList.add('show');
+      $('#imgContent').classList.add('batch-mode');
+      $$('.photo-check').forEach((el) => el.style.opacity = '1');
+    } else {
+      exitBatchMode();
+    }
   }
 }
 
@@ -278,11 +471,27 @@ function exitBatchMode() {
   btn.classList.remove('btn-outline');
   btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
   $('#imgBatchBar').classList.remove('show');
+  $('#imgContent').classList.remove('batch-mode');
   $$('.photo-check').forEach((el) => {
     el.classList.remove('checked');
-    el.style.opacity = '';
+    el.style.opacity = '0';
   });
   updateBatchCount();
+}
+
+function exitBinBatchMode() {
+  imgState.batchMode = false;
+  imgState.selected.clear();
+  const btn = $('#btnBatchMode');
+  btn.classList.remove('btn-outline');
+  btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
+  $('#imgBinBatchBar').classList.remove('show');
+  $('#imgContent').classList.remove('batch-mode');
+  $$('.photo-check').forEach((el) => {
+    el.classList.remove('checked');
+    el.style.opacity = '0';
+  });
+  updateBinBatchCount();
 }
 
 function toggleSelect(id) {
@@ -293,24 +502,37 @@ function toggleSelect(id) {
   }
   const checkEl = $(`.photo-check[data-id="${id}"]`);
   if (checkEl) checkEl.classList.toggle('checked');
-  updateBatchCount();
+  if (imgState.isBin) {
+    updateBinBatchCount();
+  } else {
+    updateBatchCount();
+  }
 }
 
 function toggleSelectAll() {
-  if (imgState.selected.size === imgState.filtered.length) {
+  const list = imgState.isBin ? imgState.binImages : imgState.filtered;
+  if (imgState.selected.size === list.length) {
     imgState.selected.clear();
   } else {
-    imgState.filtered.forEach((img) => imgState.selected.add(img.id));
+    list.forEach((img) => imgState.selected.add(img.id));
   }
   $$('.photo-check').forEach((el) => {
     const id = parseInt(el.dataset.id);
     el.classList.toggle('checked', imgState.selected.has(id));
   });
-  updateBatchCount();
+  if (imgState.isBin) {
+    updateBinBatchCount();
+  } else {
+    updateBatchCount();
+  }
 }
 
 function updateBatchCount() {
   $('#batchSelCount').textContent = imgState.selected.size;
+}
+
+function updateBinBatchCount() {
+  $('#binBatchSelCount').textContent = imgState.selected.size;
 }
 
 function batchDelete() {
@@ -326,7 +548,111 @@ function batchDelete() {
         showToast(`已删除 ${ids.length} 张图片`);
         imgState.selected.clear();
         loadImages();
+        loadBinCount();
         exitBatchMode();
+      } else {
+        showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  });
+}
+
+/* ---------- bin batch operations ---------- */
+function binBatchRestore() {
+  if (imgState.selected.size === 0) {
+    showToast('请先选择图片', 'warn');
+    return;
+  }
+  showConfirm('恢复图片', `确定要恢复选中的 ${imgState.selected.size} 张图片吗？`, async () => {
+    try {
+      const ids = Array.from(imgState.selected);
+      const res = await apiPost('/image/restore', { ids });
+      if (res.code === 0) {
+        showToast(`已恢复 ${ids.length} 张图片`);
+        imgState.selected.clear();
+        loadBinCount();
+        loadRecycleBin();
+        loadImages();
+        exitBinBatchMode();
+      } else {
+        showToast('恢复失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('恢复失败: ' + e.message, 'err');
+    }
+  });
+}
+
+function binBatchPurge() {
+  if (imgState.selected.size === 0) {
+    showToast('请先选择图片', 'warn');
+    return;
+  }
+  showConfirm('彻底删除', `确定要彻底删除选中的 ${imgState.selected.size} 张图片吗？此操作不可恢复！`, async () => {
+    try {
+      const ids = Array.from(imgState.selected);
+      const res = await apiDelete('/image/delete', { ids, hard: true });
+      if (res.code === 0) {
+        showToast(`已彻底删除 ${ids.length} 张图片`);
+        imgState.selected.clear();
+        loadBinCount();
+        loadRecycleBin();
+        exitBinBatchMode();
+      } else {
+        showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  });
+}
+
+/* ---------- single restore / purge ---------- */
+async function restoreImage(id) {
+  showConfirm('恢复图片', '确定要恢复这张图片吗？', async () => {
+    try {
+      const res = await apiPost('/image/restore', { ids: [id] });
+      if (res.code === 0) {
+        showToast('已恢复');
+        loadBinCount();
+        loadRecycleBin();
+        loadImages();
+      } else {
+        showToast('恢复失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('恢复失败: ' + e.message, 'err');
+    }
+  });
+}
+
+async function purgeImage(id) {
+  showConfirm('彻底删除', '确定要彻底删除这张图片吗？此操作不可恢复！', async () => {
+    try {
+      const res = await apiDelete('/image/delete', { ids: [id], hard: true });
+      if (res.code === 0) {
+        showToast('已彻底删除');
+        loadBinCount();
+        loadRecycleBin();
+      } else {
+        showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  });
+}
+
+async function deleteImage(id) {
+  showConfirm('删除图片', '确定要将此图片移至回收站吗？', async () => {
+    try {
+      const res = await apiDelete('/image/delete', { ids: [id], hard: false });
+      if (res.code === 0) {
+        showToast('已移至回收站');
+        loadBinCount();
+        loadImages();
       } else {
         showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
       }
@@ -338,8 +664,9 @@ function batchDelete() {
 
 /* ---------- lightbox ---------- */
 function openLightbox(index) {
+  const list = imgState.isBin ? imgState.binImages : imgState.filtered;
   imgState.currentLbIndex = index;
-  const img = imgState.filtered[index];
+  const img = list[index];
   if (!img) return;
 
   const lb = $('#lightbox');
@@ -349,7 +676,7 @@ function openLightbox(index) {
   $('#lbSize').textContent = formatSize(img.file_size || 0);
   const date = imgDate(img);
   $('#lbDate').textContent = date ? date.slice(0, 10) : '';
-  $('#lbCounter').textContent = `${index + 1} / ${imgState.filtered.length}`;
+  $('#lbCounter').textContent = `${index + 1} / ${list.length}`;
 
   $('#lbDName').textContent = imgName(img) || '-';
   $('#lbDExt').textContent = (img.file_ext || '-').replace(/^\./, '').toUpperCase();
@@ -376,7 +703,8 @@ function lbPrev() {
 }
 
 function lbNext() {
-  if (imgState.currentLbIndex < imgState.filtered.length - 1) {
+  const list = imgState.isBin ? imgState.binImages : imgState.filtered;
+  if (imgState.currentLbIndex < list.length - 1) {
     openLightbox(imgState.currentLbIndex + 1);
   }
 }

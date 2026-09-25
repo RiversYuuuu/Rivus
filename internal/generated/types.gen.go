@@ -121,6 +121,42 @@ func (e SearchAudioParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for GetImageRecycleBinParamsSortBy.
+const (
+	GetImageRecycleBinParamsSortByFileSize GetImageRecycleBinParamsSortBy = "file_size"
+	GetImageRecycleBinParamsSortByShotAt   GetImageRecycleBinParamsSortBy = "shot_at"
+)
+
+// Valid indicates whether the value is a known member of the GetImageRecycleBinParamsSortBy enum.
+func (e GetImageRecycleBinParamsSortBy) Valid() bool {
+	switch e {
+	case GetImageRecycleBinParamsSortByFileSize:
+		return true
+	case GetImageRecycleBinParamsSortByShotAt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetImageRecycleBinParamsSortOrder.
+const (
+	GetImageRecycleBinParamsSortOrderAsc  GetImageRecycleBinParamsSortOrder = "asc"
+	GetImageRecycleBinParamsSortOrderDesc GetImageRecycleBinParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the GetImageRecycleBinParamsSortOrder enum.
+func (e GetImageRecycleBinParamsSortOrder) Valid() bool {
+	switch e {
+	case GetImageRecycleBinParamsSortOrderAsc:
+		return true
+	case GetImageRecycleBinParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchImageParamsSortBy.
 const (
 	SearchImageParamsSortByFileSize SearchImageParamsSortBy = "file_size"
@@ -151,6 +187,42 @@ func (e SearchImageParamsSortOrder) Valid() bool {
 	case SearchImageParamsSortOrderAsc:
 		return true
 	case SearchImageParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetVideoRecycleBinParamsSortBy.
+const (
+	GetVideoRecycleBinParamsSortByFileSize GetVideoRecycleBinParamsSortBy = "file_size"
+	GetVideoRecycleBinParamsSortByShotAt   GetVideoRecycleBinParamsSortBy = "shot_at"
+)
+
+// Valid indicates whether the value is a known member of the GetVideoRecycleBinParamsSortBy enum.
+func (e GetVideoRecycleBinParamsSortBy) Valid() bool {
+	switch e {
+	case GetVideoRecycleBinParamsSortByFileSize:
+		return true
+	case GetVideoRecycleBinParamsSortByShotAt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetVideoRecycleBinParamsSortOrder.
+const (
+	GetVideoRecycleBinParamsSortOrderAsc  GetVideoRecycleBinParamsSortOrder = "asc"
+	GetVideoRecycleBinParamsSortOrderDesc GetVideoRecycleBinParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the GetVideoRecycleBinParamsSortOrder enum.
+func (e GetVideoRecycleBinParamsSortOrder) Valid() bool {
+	switch e {
+	case GetVideoRecycleBinParamsSortOrderAsc:
+		return true
+	case GetVideoRecycleBinParamsSortOrderDesc:
 		return true
 	default:
 		return false
@@ -293,6 +365,42 @@ type DeleteAudioResponse struct {
 	Message string `json:"message"`
 }
 
+// DeleteImageRequest defines model for DeleteImageRequest.
+type DeleteImageRequest struct {
+	// Hard 是否硬删除，默认false
+	Hard *bool `json:"hard,omitempty"`
+
+	// Ids 图片ID列表
+	Ids *[]int `json:"ids,omitempty"`
+}
+
+// DeleteImageResponse defines model for DeleteImageResponse.
+type DeleteImageResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// DeleteVideoRequest defines model for DeleteVideoRequest.
+type DeleteVideoRequest struct {
+	// Hard 是否硬删除，默认false
+	Hard *bool `json:"hard,omitempty"`
+
+	// Ids 视频ID列表
+	Ids *[]int `json:"ids,omitempty"`
+}
+
+// DeleteVideoResponse defines model for DeleteVideoResponse.
+type DeleteVideoResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // FetchLyricResponse defines model for FetchLyricResponse.
 type FetchLyricResponse struct {
 	// Code Example: 0
@@ -316,6 +424,19 @@ type GetConfigResponse struct {
 	Message string `json:"message"`
 }
 
+// GetImageRecycleBinResponse defines model for GetImageRecycleBinResponse.
+type GetImageRecycleBinResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data struct {
+		ImageList  *[]ImageItem `json:"image_list,omitempty"`
+		Pagination *Pagination  `json:"pagination,omitempty"`
+	} `json:"data"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // GetRecycleBinResponse defines model for GetRecycleBinResponse.
 type GetRecycleBinResponse struct {
 	// Code Example: 0
@@ -323,6 +444,19 @@ type GetRecycleBinResponse struct {
 	Data struct {
 		AudioList  *[]AudioItem `json:"audio_list,omitempty"`
 		Pagination *Pagination  `json:"pagination,omitempty"`
+	} `json:"data"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// GetVideoRecycleBinResponse defines model for GetVideoRecycleBinResponse.
+type GetVideoRecycleBinResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data struct {
+		Pagination *Pagination  `json:"pagination,omitempty"`
+		VideoList  *[]VideoItem `json:"video_list,omitempty"`
 	} `json:"data"`
 
 	// Message Example: success
@@ -425,6 +559,36 @@ type RestoreAudioRequest struct {
 
 // RestoreAudioResponse defines model for RestoreAudioResponse.
 type RestoreAudioResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// RestoreImageRequest defines model for RestoreImageRequest.
+type RestoreImageRequest struct {
+	// Ids 图片ID列表
+	Ids *[]int `json:"ids,omitempty"`
+}
+
+// RestoreImageResponse defines model for RestoreImageResponse.
+type RestoreImageResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
+// RestoreVideoRequest defines model for RestoreVideoRequest.
+type RestoreVideoRequest struct {
+	// Ids 视频ID列表
+	Ids *[]int `json:"ids,omitempty"`
+}
+
+// RestoreVideoResponse defines model for RestoreVideoResponse.
+type RestoreVideoResponse struct {
 	// Code Example: 0
 	Code int `json:"code"`
 
@@ -824,6 +988,20 @@ type BrowseParams struct {
 	Directory *string `form:"directory,omitempty" json:"directory,omitempty"`
 }
 
+// GetImageRecycleBinParams defines parameters for GetImageRecycleBin.
+type GetImageRecycleBinParams struct {
+	Page      *int                               `form:"page,omitempty" json:"page,omitempty"`
+	PageSize  *int                               `form:"page_size,omitempty" json:"page_size,omitempty"`
+	SortBy    *GetImageRecycleBinParamsSortBy    `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+	SortOrder *GetImageRecycleBinParamsSortOrder `form:"sort_order,omitempty" json:"sort_order,omitempty"`
+}
+
+// GetImageRecycleBinParamsSortBy defines parameters for GetImageRecycleBin.
+type GetImageRecycleBinParamsSortBy string
+
+// GetImageRecycleBinParamsSortOrder defines parameters for GetImageRecycleBin.
+type GetImageRecycleBinParamsSortOrder string
+
 // SearchImageParams defines parameters for SearchImage.
 type SearchImageParams struct {
 	Page      *int                        `form:"page,omitempty" json:"page,omitempty"`
@@ -856,6 +1034,20 @@ type SyncBrowseParams struct {
 	Username  *string `form:"username,omitempty" json:"username,omitempty"`
 	Password  *string `form:"password,omitempty" json:"password,omitempty"`
 }
+
+// GetVideoRecycleBinParams defines parameters for GetVideoRecycleBin.
+type GetVideoRecycleBinParams struct {
+	Page      *int                               `form:"page,omitempty" json:"page,omitempty"`
+	PageSize  *int                               `form:"page_size,omitempty" json:"page_size,omitempty"`
+	SortBy    *GetVideoRecycleBinParamsSortBy    `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+	SortOrder *GetVideoRecycleBinParamsSortOrder `form:"sort_order,omitempty" json:"sort_order,omitempty"`
+}
+
+// GetVideoRecycleBinParamsSortBy defines parameters for GetVideoRecycleBin.
+type GetVideoRecycleBinParamsSortBy string
+
+// GetVideoRecycleBinParamsSortOrder defines parameters for GetVideoRecycleBin.
+type GetVideoRecycleBinParamsSortOrder string
 
 // SearchVideoParams defines parameters for SearchVideo.
 type SearchVideoParams struct {
@@ -902,6 +1094,12 @@ type UploadAudioMultipartRequestBody UploadAudioMultipartBody
 // SetConfigJSONRequestBody defines body for SetConfig for application/json ContentType.
 type SetConfigJSONRequestBody = SetConfigRequest
 
+// DeleteImageJSONRequestBody defines body for DeleteImage for application/json ContentType.
+type DeleteImageJSONRequestBody = DeleteImageRequest
+
+// RestoreImageJSONRequestBody defines body for RestoreImage for application/json ContentType.
+type RestoreImageJSONRequestBody = RestoreImageRequest
+
 // SyncCompareJSONRequestBody defines body for SyncCompare for application/json ContentType.
 type SyncCompareJSONRequestBody = SyncCompareRequest
 
@@ -910,3 +1108,9 @@ type SyncExecuteJSONRequestBody = SyncExecuteRequest
 
 // SyncTestConnectionJSONRequestBody defines body for SyncTestConnection for application/json ContentType.
 type SyncTestConnectionJSONRequestBody = SyncTestConnectionRequest
+
+// DeleteVideoJSONRequestBody defines body for DeleteVideo for application/json ContentType.
+type DeleteVideoJSONRequestBody = DeleteVideoRequest
+
+// RestoreVideoJSONRequestBody defines body for RestoreVideo for application/json ContentType.
+type RestoreVideoJSONRequestBody = RestoreVideoRequest

@@ -58,6 +58,15 @@ type ServerInterface interface {
 	// SetConfig 配置接口
 	// (POST /config)
 	SetConfig(c *gin.Context)
+	// DeleteImage 删除图片
+	// (DELETE /image/delete)
+	DeleteImage(c *gin.Context)
+	// GetImageRecycleBin 获取回收站图片
+	// (GET /image/recyclebin)
+	GetImageRecycleBin(c *gin.Context, params GetImageRecycleBinParams)
+	// RestoreImage 恢复图片
+	// (POST /image/restore)
+	RestoreImage(c *gin.Context)
 	// ScanImage 扫描图片目录，构建图片元数据
 	// (GET /image/scan)
 	ScanImage(c *gin.Context)
@@ -85,6 +94,15 @@ type ServerInterface interface {
 
 	// (POST /sync/test-connection)
 	SyncTestConnection(c *gin.Context)
+	// DeleteVideo 删除视频
+	// (DELETE /video/delete)
+	DeleteVideo(c *gin.Context)
+	// GetVideoRecycleBin 获取回收站视频
+	// (GET /video/recyclebin)
+	GetVideoRecycleBin(c *gin.Context, params GetVideoRecycleBinParams)
+	// RestoreVideo 恢复视频
+	// (POST /video/restore)
+	RestoreVideo(c *gin.Context)
 	// ScanVideo 扫描视频目录，构建视频元数据
 	// (GET /video/scan)
 	ScanVideo(c *gin.Context)
@@ -465,6 +483,83 @@ func (siw *ServerInterfaceWrapper) SetConfig(c *gin.Context) {
 	siw.Handler.SetConfig(c)
 }
 
+// DeleteImage operation middleware
+func (siw *ServerInterfaceWrapper) DeleteImage(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteImage(c)
+}
+
+// GetImageRecycleBin operation middleware
+func (siw *ServerInterfaceWrapper) GetImageRecycleBin(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetImageRecycleBinParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page_size: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_by" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_by", c.Request.URL.Query(), &params.SortBy, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_by: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_order" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_order", c.Request.URL.Query(), &params.SortOrder, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_order: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetImageRecycleBin(c, params)
+}
+
+// RestoreImage operation middleware
+func (siw *ServerInterfaceWrapper) RestoreImage(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RestoreImage(c)
+}
+
 // ScanImage operation middleware
 func (siw *ServerInterfaceWrapper) ScanImage(c *gin.Context) {
 
@@ -694,6 +789,83 @@ func (siw *ServerInterfaceWrapper) SyncTestConnection(c *gin.Context) {
 	siw.Handler.SyncTestConnection(c)
 }
 
+// DeleteVideo operation middleware
+func (siw *ServerInterfaceWrapper) DeleteVideo(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteVideo(c)
+}
+
+// GetVideoRecycleBin operation middleware
+func (siw *ServerInterfaceWrapper) GetVideoRecycleBin(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetVideoRecycleBinParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page_size: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_by" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_by", c.Request.URL.Query(), &params.SortBy, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_by: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_order" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_order", c.Request.URL.Query(), &params.SortOrder, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_order: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetVideoRecycleBin(c, params)
+}
+
+// RestoreVideo operation middleware
+func (siw *ServerInterfaceWrapper) RestoreVideo(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RestoreVideo(c)
+}
+
 // ScanVideo operation middleware
 func (siw *ServerInterfaceWrapper) ScanVideo(c *gin.Context) {
 
@@ -863,8 +1035,14 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/image/search", wrapper.SearchImage)
 	router.GET(options.BaseURL+"/image/source", wrapper.GetImageSource)
 	router.GET(options.BaseURL+"/image/thumb", wrapper.GetImageThumb)
+	router.GET(options.BaseURL+"/image/recyclebin", wrapper.GetImageRecycleBin)
+	router.DELETE(options.BaseURL+"/image/delete", wrapper.DeleteImage)
+	router.POST(options.BaseURL+"/image/restore", wrapper.RestoreImage)
 	router.GET(options.BaseURL+"/video/scan", wrapper.ScanVideo)
 	router.GET(options.BaseURL+"/video/search", wrapper.SearchVideo)
 	router.GET(options.BaseURL+"/video/source", wrapper.GetVideoSource)
 	router.GET(options.BaseURL+"/video/thumb", wrapper.GetVideoThumb)
+	router.GET(options.BaseURL+"/video/recyclebin", wrapper.GetVideoRecycleBin)
+	router.DELETE(options.BaseURL+"/video/delete", wrapper.DeleteVideo)
+	router.POST(options.BaseURL+"/video/restore", wrapper.RestoreVideo)
 }

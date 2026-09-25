@@ -4,12 +4,19 @@
 
 const videoState = {
   videos: [],
+  binVideos: [],
   filtered: [],
   selected: new Set(),
   batchMode: false,
+  isBin: false,
   currentLbIndex: -1,
   sortBy: 'date',
   sortOrder: 'desc',
+  binSortBy: 'shot_at',
+  binSortOrder: 'desc',
+  binPage: 1,
+  binPageSize: 10,
+  binTotal: 0,
 };
 
 const lazyLoader = new IntersectionObserver((entries) => {
@@ -38,6 +45,7 @@ function videoInit() {
   initTheme();
   videoBindEvents();
   loadVideos();
+  loadBinCount();
 }
 
 function videoBindEvents() {
@@ -82,10 +90,54 @@ function videoBindEvents() {
     $('#sortMenu').classList.add('hidden');
   });
 
+  // Tab switching
+  $$('.img-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      $$('.img-tab').forEach((t) => t.classList.remove('on'));
+      tab.classList.add('on');
+      if (target === 'bin') {
+        videoState.isBin = true;
+        videoState.batchMode = false;
+        videoState.selected.clear();
+        $('#btnBatchMode').innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
+        $('#btnBatchMode').classList.remove('btn-outline');
+        $('#videoBatchBar').classList.remove('show');
+        $('#videoBinBatchBar').classList.remove('show');
+        $('#videoContent').classList.remove('batch-mode');
+        $$('.video-check').forEach((el) => {
+          el.classList.remove('checked');
+          el.style.opacity = '0';
+        });
+        loadRecycleBin();
+      } else {
+        videoState.isBin = false;
+        videoState.batchMode = false;
+        videoState.selected.clear();
+        $('#btnBatchMode').innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
+        $('#btnBatchMode').classList.remove('btn-outline');
+        $('#videoBatchBar').classList.remove('show');
+        $('#videoBinBatchBar').classList.remove('show');
+        $('#videoContent').classList.remove('batch-mode');
+        $$('.video-check').forEach((el) => {
+          el.classList.remove('checked');
+          el.style.opacity = '0';
+        });
+        applyFilter();
+      }
+    });
+  });
+
   $('#btnBatchMode').addEventListener('click', toggleBatchMode);
   $('#btnBatchCancel').addEventListener('click', exitBatchMode);
   $('#btnBatchCheckAll').addEventListener('click', toggleSelectAll);
   $('#btnBatchDelete').addEventListener('click', batchDelete);
+
+  // Bin batch bar events
+  $('#btnBinBatchCheckAll').addEventListener('click', toggleSelectAll);
+  $('#btnBinBatchCancel').addEventListener('click', exitBinBatchMode);
+  $('#btnBinBatchRestore').addEventListener('click', binBatchRestore);
+  $('#btnBinBatchPurge').addEventListener('click', binBatchPurge);
 
   $('#lbClose').addEventListener('click', closeLightbox);
   $('#lbPrev').addEventListener('click', lbPrev);
@@ -121,8 +173,43 @@ async function loadVideos() {
   } catch (e) {
     videoState.videos = [];
   }
-  applyFilter();
+  if (!videoState.isBin) applyFilter();
   updateStats();
+}
+
+async function loadBinCount() {
+  try {
+    const res = await apiGet('/video/recyclebin', { page: 1, page_size: 1 });
+    if (res.code === 0 && res.data && res.data.pagination) {
+      videoState.binTotal = res.data.pagination.total || 0;
+      $('#cntBin').textContent = videoState.binTotal;
+    }
+  } catch (e) {
+    $('#cntBin').textContent = '0';
+  }
+}
+
+async function loadRecycleBin() {
+  try {
+    const res = await apiGet('/video/recyclebin', {
+      page: videoState.binPage,
+      page_size: videoState.binPageSize,
+      sort_by: videoState.binSortBy,
+      sort_order: videoState.binSortOrder,
+    });
+    if (res.code === 0 && res.data) {
+      videoState.binVideos = res.data.video_list || [];
+      if (res.data.pagination) {
+        videoState.binTotal = res.data.pagination.total || 0;
+        $('#cntBin').textContent = videoState.binTotal;
+      }
+    } else {
+      videoState.binVideos = [];
+    }
+  } catch (e) {
+    videoState.binVideos = [];
+  }
+  renderBinGrid();
 }
 
 function applyFilter() {
@@ -159,6 +246,8 @@ function updateSortUI() {
 function renderGrid() {
   const content = $('#videoContent');
   const empty = $('#videoEmpty');
+  const binEmpty = $('#videoBinEmpty');
+  binEmpty.classList.add('hidden');
 
   if (videoState.filtered.length === 0) {
     content.innerHTML = '';
@@ -185,6 +274,11 @@ function renderGrid() {
         <div class="video-check${checked}" data-id="${v.id}">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
+        <div class="video-actions">
+          <button class="video-act delete-btn" data-id="${v.id}" title="移至回收站">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M16 6v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
         <div class="video-thumb">
           <img data-src="/video/thumb?id=${v.id}" loading="lazy" alt="${esc(videoName(v))}" onerror="this.style.display='none'">
           <div class="play-icon">
@@ -208,12 +302,81 @@ function renderGrid() {
   content.querySelectorAll('img[data-src]').forEach((img) => lazyLoader.observe(img));
 }
 
+function renderBinGrid() {
+  const content = $('#videoContent');
+  const empty = $('#videoEmpty');
+  const binEmpty = $('#videoBinEmpty');
+  empty.classList.add('hidden');
+
+  if (videoState.binVideos.length === 0) {
+    content.innerHTML = '';
+    binEmpty.classList.remove('hidden');
+    return;
+  }
+
+  binEmpty.classList.add('hidden');
+
+  const groups = groupByDate(videoState.binVideos);
+
+  let html = '';
+  for (const [label, videos] of groups) {
+    html += `<div class="date-group">`;
+    html += `<div class="date-header"><span class="date-label">${esc(label)}</span><span class="date-count">${videos.length} 个</span></div>`;
+    html += `<div class="video-grid">`;
+    for (const v of videos) {
+      const ext = (v.file_ext || '').replace(/^\./, '').toUpperCase();
+      const width = v.width || 0;
+      const height = v.height || 0;
+      const resolution = (width && height) ? `${width}×${height}` : '';
+      const checked = videoState.selected.has(v.id) ? ' checked' : '';
+      html += `<div class="video-cell" data-id="${v.id}" data-path="${esc(v.file_path || '')}">
+        <div class="video-check${checked}" data-id="${v.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="video-actions">
+          <button class="video-act restore-btn" data-id="${v.id}" title="恢复">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-7.7L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+          <button class="video-act purge-btn" data-id="${v.id}" title="彻底删除">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/></svg>
+          </button>
+        </div>
+        <div class="video-thumb">
+          <img data-src="/video/thumb?id=${v.id}" loading="lazy" alt="${esc(videoName(v))}" onerror="this.style.display='none'">
+          <div class="play-icon">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <div class="video-info">
+          <div class="video-fname">${esc(videoName(v))}</div>
+          <div class="video-meta">
+            ${ext ? `<span class="vm-ext">${esc(ext)}</span>` : ''}
+            ${resolution ? `<span class="vm-res">${esc(resolution)}</span>` : ''}
+          </div>
+          ${v.delete_time ? `<div class="video-delete-time">删除于 ${esc(v.delete_time.slice(0, 10))}</div>` : ''}
+        </div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  content.innerHTML = html;
+  bindBinCellEvents();
+  content.querySelectorAll('img[data-src]').forEach((img) => lazyLoader.observe(img));
+}
+
 function bindCellEvents() {
   $$('.video-cell').forEach((cell) => {
     cell.addEventListener('click', (e) => {
       if (e.target.closest('.video-check')) {
         const id = parseInt(e.target.closest('.video-check').dataset.id);
         toggleSelect(id);
+        return;
+      }
+      if (e.target.closest('.delete-btn')) {
+        e.stopPropagation();
+        const id = parseInt(e.target.closest('.delete-btn').dataset.id);
+        deleteVideo(id);
         return;
       }
       if (videoState.batchMode) {
@@ -224,6 +387,35 @@ function bindCellEvents() {
       const id = parseInt(cell.dataset.id);
       const idx = videoState.filtered.findIndex((v) => v.id === id);
       if (idx >= 0) openLightbox(idx);
+    });
+  });
+}
+
+function bindBinCellEvents() {
+  $$('.video-cell').forEach((cell) => {
+    cell.addEventListener('click', (e) => {
+      if (e.target.closest('.video-check')) {
+        const id = parseInt(e.target.closest('.video-check').dataset.id);
+        toggleSelect(id);
+        return;
+      }
+      if (e.target.closest('.restore-btn')) {
+        e.stopPropagation();
+        const id = parseInt(e.target.closest('.restore-btn').dataset.id);
+        restoreVideo(id);
+        return;
+      }
+      if (e.target.closest('.purge-btn')) {
+        e.stopPropagation();
+        const id = parseInt(e.target.closest('.purge-btn').dataset.id);
+        purgeVideo(id);
+        return;
+      }
+      if (videoState.batchMode) {
+        const id = parseInt(cell.dataset.id);
+        toggleSelect(id);
+        return;
+      }
     });
   });
 }
@@ -275,19 +467,33 @@ function updateStats() {
   $('#vsSize').textContent = (totalSize / 1e9).toFixed(2);
   $('#vsFormats').textContent = exts.size;
   $('#vsDays').textContent = spanDays;
+  $('#cntLib').textContent = total;
 }
 
 /* ---------- batch ---------- */
 function toggleBatchMode() {
   videoState.batchMode = !videoState.batchMode;
   const btn = $('#btnBatchMode');
-  if (videoState.batchMode) {
-    btn.classList.add('btn-outline');
-    btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 退出批量';
-    $('#videoBatchBar').classList.add('show');
-    $$('.video-check').forEach((el) => el.style.opacity = '1');
+  if (videoState.isBin) {
+    if (videoState.batchMode) {
+      btn.classList.add('btn-outline');
+      btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 退出批量';
+      $('#videoBinBatchBar').classList.add('show');
+      $('#videoContent').classList.add('batch-mode');
+      $$('.video-check').forEach((el) => el.style.opacity = '1');
+    } else {
+      exitBinBatchMode();
+    }
   } else {
-    exitBatchMode();
+    if (videoState.batchMode) {
+      btn.classList.add('btn-outline');
+      btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 退出批量';
+      $('#videoBatchBar').classList.add('show');
+      $('#videoContent').classList.add('batch-mode');
+      $$('.video-check').forEach((el) => el.style.opacity = '1');
+    } else {
+      exitBatchMode();
+    }
   }
 }
 
@@ -298,11 +504,27 @@ function exitBatchMode() {
   btn.classList.remove('btn-outline');
   btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
   $('#videoBatchBar').classList.remove('show');
+  $('#videoContent').classList.remove('batch-mode');
   $$('.video-check').forEach((el) => {
     el.classList.remove('checked');
-    el.style.opacity = '';
+    el.style.opacity = '0';
   });
   updateBatchCount();
+}
+
+function exitBinBatchMode() {
+  videoState.batchMode = false;
+  videoState.selected.clear();
+  const btn = $('#btnBatchMode');
+  btn.classList.remove('btn-outline');
+  btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> 批量';
+  $('#videoBinBatchBar').classList.remove('show');
+  $('#videoContent').classList.remove('batch-mode');
+  $$('.video-check').forEach((el) => {
+    el.classList.remove('checked');
+    el.style.opacity = '0';
+  });
+  updateBinBatchCount();
 }
 
 function toggleSelect(id) {
@@ -313,24 +535,37 @@ function toggleSelect(id) {
   }
   const checkEl = $(`.video-check[data-id="${id}"]`);
   if (checkEl) checkEl.classList.toggle('checked');
-  updateBatchCount();
+  if (videoState.isBin) {
+    updateBinBatchCount();
+  } else {
+    updateBatchCount();
+  }
 }
 
 function toggleSelectAll() {
-  if (videoState.selected.size === videoState.filtered.length) {
+  const list = videoState.isBin ? videoState.binVideos : videoState.filtered;
+  if (videoState.selected.size === list.length) {
     videoState.selected.clear();
   } else {
-    videoState.filtered.forEach((v) => videoState.selected.add(v.id));
+    list.forEach((v) => videoState.selected.add(v.id));
   }
   $$('.video-check').forEach((el) => {
     const id = parseInt(el.dataset.id);
     el.classList.toggle('checked', videoState.selected.has(id));
   });
-  updateBatchCount();
+  if (videoState.isBin) {
+    updateBinBatchCount();
+  } else {
+    updateBatchCount();
+  }
 }
 
 function updateBatchCount() {
   $('#batchSelCount').textContent = videoState.selected.size;
+}
+
+function updateBinBatchCount() {
+  $('#binBatchSelCount').textContent = videoState.selected.size;
 }
 
 function batchDelete() {
@@ -346,7 +581,111 @@ function batchDelete() {
         showToast(`已删除 ${ids.length} 个视频`);
         videoState.selected.clear();
         loadVideos();
+        loadBinCount();
         exitBatchMode();
+      } else {
+        showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  });
+}
+
+/* ---------- bin batch operations ---------- */
+function binBatchRestore() {
+  if (videoState.selected.size === 0) {
+    showToast('请先选择视频', 'warn');
+    return;
+  }
+  showConfirm('恢复视频', `确定要恢复选中的 ${videoState.selected.size} 个视频吗？`, async () => {
+    try {
+      const ids = Array.from(videoState.selected);
+      const res = await apiPost('/video/restore', { ids });
+      if (res.code === 0) {
+        showToast(`已恢复 ${ids.length} 个视频`);
+        videoState.selected.clear();
+        loadBinCount();
+        loadRecycleBin();
+        loadVideos();
+        exitBinBatchMode();
+      } else {
+        showToast('恢复失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('恢复失败: ' + e.message, 'err');
+    }
+  });
+}
+
+function binBatchPurge() {
+  if (videoState.selected.size === 0) {
+    showToast('请先选择视频', 'warn');
+    return;
+  }
+  showConfirm('彻底删除', `确定要彻底删除选中的 ${videoState.selected.size} 个视频吗？此操作不可恢复！`, async () => {
+    try {
+      const ids = Array.from(videoState.selected);
+      const res = await apiDelete('/video/delete', { ids, hard: true });
+      if (res.code === 0) {
+        showToast(`已彻底删除 ${ids.length} 个视频`);
+        videoState.selected.clear();
+        loadBinCount();
+        loadRecycleBin();
+        exitBinBatchMode();
+      } else {
+        showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  });
+}
+
+/* ---------- single restore / purge ---------- */
+async function restoreVideo(id) {
+  showConfirm('恢复视频', '确定要恢复这个视频吗？', async () => {
+    try {
+      const res = await apiPost('/video/restore', { ids: [id] });
+      if (res.code === 0) {
+        showToast('已恢复');
+        loadBinCount();
+        loadRecycleBin();
+        loadVideos();
+      } else {
+        showToast('恢复失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('恢复失败: ' + e.message, 'err');
+    }
+  });
+}
+
+async function purgeVideo(id) {
+  showConfirm('彻底删除', '确定要彻底删除这个视频吗？此操作不可恢复！', async () => {
+    try {
+      const res = await apiDelete('/video/delete', { ids: [id], hard: true });
+      if (res.code === 0) {
+        showToast('已彻底删除');
+        loadBinCount();
+        loadRecycleBin();
+      } else {
+        showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
+      }
+    } catch (e) {
+      showToast('删除失败: ' + e.message, 'err');
+    }
+  });
+}
+
+async function deleteVideo(id) {
+  showConfirm('删除视频', '确定要将此视频移至回收站吗？', async () => {
+    try {
+      const res = await apiDelete('/video/delete', { ids: [id], hard: false });
+      if (res.code === 0) {
+        showToast('已移至回收站');
+        loadBinCount();
+        loadVideos();
       } else {
         showToast('删除失败: ' + (res.message || '未知错误'), 'warn');
       }
@@ -358,8 +697,9 @@ function batchDelete() {
 
 /* ---------- lightbox ---------- */
 function openLightbox(index) {
+  const list = videoState.isBin ? videoState.binVideos : videoState.filtered;
   videoState.currentLbIndex = index;
-  const video = videoState.filtered[index];
+  const video = list[index];
   if (!video) return;
 
   const lb = $('#lightbox');
@@ -379,7 +719,7 @@ function openLightbox(index) {
   const width = video.width || 0;
   const height = video.height || 0;
   $('#lbRes').textContent = (width && height) ? `${width}×${height}` : '-';
-  $('#lbCounter').textContent = `${index + 1} / ${videoState.filtered.length}`;
+  $('#lbCounter').textContent = `${index + 1} / ${list.length}`;
 
   $('#lbDName').textContent = videoName(video) || '-';
   $('#lbDExt').textContent = (video.file_ext || '-').replace(/^\./, '').toUpperCase();
@@ -419,7 +759,8 @@ function lbPrev() {
 }
 
 function lbNext() {
-  if (videoState.currentLbIndex < videoState.filtered.length - 1) {
+  const list = videoState.isBin ? videoState.binVideos : videoState.filtered;
+  if (videoState.currentLbIndex < list.length - 1) {
     openLightbox(videoState.currentLbIndex + 1);
   }
 }
@@ -446,6 +787,15 @@ function videoCloseConfirm() {
 function videoConfirmAction() {
   if (confirmCallback) confirmCallback();
   videoCloseConfirm();
+}
+
+/* ---------- utils ---------- */
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
 }
 
 document.addEventListener('DOMContentLoaded', videoInit);

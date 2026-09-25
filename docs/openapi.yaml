@@ -554,6 +554,87 @@ paths:
         '200':
           content:
             image/*: {}
+  /image/recyclebin:
+    get:
+      operationId: GetImageRecycleBin
+      summary: 获取回收站图片
+      description: 获取所有已删除的图片
+      parameters:
+        # 分页参数
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 页码，默认第一页
+          required: false
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+            description: 每页数量，默认10条
+          required: false
+        # 排序参数
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [shot_at, file_size]
+            default: shot_at
+            description: 排序字段，默认按拍摄时间排序
+          required: false
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+            description: 排序顺序，默认升序
+          required: false
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetImageRecycleBinResponse'
+  /image/delete:
+    delete:
+      operationId: DeleteImage
+      summary: 删除图片
+      description: 根据图片ID删除图片
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteImageRequest'
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteImageResponse'
+  /image/restore:
+    post:
+      operationId: RestoreImage
+      summary: 恢复图片
+      description: 根据图片ID恢复图片
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreImageRequest'
+      responses:
+        '200':
+          description: 恢复成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreImageResponse'
   /video/scan:
     get:
       operationId: ScanVideo
@@ -647,6 +728,87 @@ paths:
         '200':
           content:
             image/*: {}
+  /video/recyclebin:
+    get:
+      operationId: GetVideoRecycleBin
+      summary: 获取回收站视频
+      description: 获取所有已删除的视频
+      parameters:
+        # 分页参数
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            description: 页码，默认第一页
+          required: false
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+            description: 每页数量，默认10条
+          required: false
+        # 排序参数
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [shot_at, file_size]
+            default: shot_at
+            description: 排序字段，默认按拍摄时间排序
+          required: false
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+            description: 排序顺序，默认升序
+          required: false
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVideoRecycleBinResponse'
+  /video/delete:
+    delete:
+      operationId: DeleteVideo
+      summary: 删除视频
+      description: 根据视频ID删除视频
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteVideoRequest'
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteVideoResponse'
+  /video/restore:
+    post:
+      operationId: RestoreVideo
+      summary: 恢复视频
+      description: 根据视频ID恢复视频
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreVideoRequest'
+      responses:
+        '200':
+          description: 恢复成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreVideoResponse'
 
 components:
   schemas:
@@ -894,6 +1056,44 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AudioItem'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    GetImageRecycleBinResponse:
+      type: object
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            image_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImageItem'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    GetVideoRecycleBinResponse:
+      type: object
+      required: [code, message, data]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            video_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/VideoItem'
             pagination:
               $ref: '#/components/schemas/Pagination'
     UploadLyricsRequest:
@@ -1262,3 +1462,83 @@ components:
                 $ref: '#/components/schemas/VideoItem'
             pagination:
               $ref: '#/components/schemas/Pagination'
+    DeleteVideoRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: 视频ID列表
+        hard:
+          type: boolean
+          description: 是否硬删除，默认false
+          default: false
+    DeleteVideoResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    RestoreVideoRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: 视频ID列表
+    RestoreVideoResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    DeleteImageRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: 图片ID列表
+        hard:
+          type: boolean
+          description: 是否硬删除，默认false
+          default: false
+    DeleteImageResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    RestoreImageRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: 图片ID列表
+    RestoreImageResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
