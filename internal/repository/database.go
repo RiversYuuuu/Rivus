@@ -20,6 +20,7 @@ func NewRepository(dbPath string) (*Repository, error) {
 	db.AutoMigrate(&model.Config{})
 	db.AutoMigrate(&model.Audio{})
 	db.AutoMigrate(&model.Image{})
+	db.AutoMigrate(&model.Video{})
 
 	return &Repository{DB: db}, nil
 }

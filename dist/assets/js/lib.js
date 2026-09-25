@@ -771,6 +771,8 @@ function openSyncModal(compareType) {
   $('#syncConnStatus').className = 'sync-conn-status';
   $('#syncSubtitle').textContent = syncState.compareType === 'image'
     ? '连接远程 FTP 服务器，同步图片文件'
+    : syncState.compareType === 'video'
+    ? '连接远程 FTP 服务器，同步视频文件'
     : '连接远程 FTP 服务器，同步音频文件';
   renderSyncStep();
 }
@@ -800,9 +802,10 @@ function renderSyncStep() {
   $('#btnSyncExecute').classList.toggle('hidden', step !== 3);
   $('#btnSyncDone').classList.toggle('hidden', step !== 4);
 
+  const typeLabel = syncState.compareType === 'image' ? '图片' : syncState.compareType === 'video' ? '视频' : '音频';
   const subtitles = {
-    1: '连接远程 FTP 服务器，同步音频文件',
-    2: '选择远程 FTP 上的音频目录',
+    1: '连接远程 FTP 服务器，同步' + typeLabel + '文件',
+    2: '选择远程 FTP 上的' + typeLabel + '目录',
     3: '对比本地与远程文件差异',
     4: '执行文件同步操作',
   };
@@ -1079,6 +1082,11 @@ function renderSyncTable() {
     return;
   }
 
+  const fileIconSvg = syncState.compareType === 'image'
+    ? '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+    : syncState.compareType === 'video'
+    ? '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
+    : '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
   items.innerHTML = files.map((f) => {
     const displayName = f.split(/[/\\]/).pop();
     const isChecked = selectedSet.has(f);
@@ -1087,7 +1095,7 @@ function renderSyncTable() {
         <button class="sync-row-check${isChecked ? ' checked' : ''}" data-path="${esc(f)}" type="button">
           <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
         </button>
-        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        ${fileIconSvg}
         <span class="sync-file-name" title="${esc(f)}">${esc(displayName)}</span>
       </label>
     `;
@@ -1187,6 +1195,11 @@ async function doSyncExecute() {
           await apiGet('/image/scan');
         }
         loadImages();
+      } else if (syncState.compareType === 'video' && typeof loadVideos === 'function') {
+        if (dlCount > 0) {
+          await apiGet('/video/scan');
+        }
+        loadVideos();
       } else if (typeof loadLibrary === 'function') {
         if (dlCount > 0) {
           await apiGet('/audio/scan');
@@ -1231,6 +1244,8 @@ function bindSyncEvents() {
     closeSyncModal();
     if (syncState.compareType === 'image' && typeof loadImages === 'function') {
       loadImages();
+    } else if (syncState.compareType === 'video' && typeof loadVideos === 'function') {
+      loadVideos();
     } else if (typeof loadLibrary === 'function') {
       loadLibrary();
     }

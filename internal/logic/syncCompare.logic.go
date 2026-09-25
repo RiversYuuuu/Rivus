@@ -4,6 +4,7 @@ import (
 	generated "Rivus/internal/generated"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jlaffaye/ftp"
@@ -109,10 +110,18 @@ var imageExts = map[string]bool{
 	".heic": true,
 }
 
+var videoExts = map[string]bool{
+	".mp4": true,
+	".mov": true,
+}
+
 func isSupportedFile(fileName string, compareType *generated.SyncCompareRequestCompareType) bool {
-	ext := filepath.Ext(fileName)
+	ext := strings.ToLower(filepath.Ext(fileName))
 	if compareType != nil && *compareType == generated.SyncCompareRequestCompareTypeImage {
 		return imageExts[ext]
+	}
+	if compareType != nil && *compareType == generated.SyncCompareRequestCompareTypeVideo {
+		return videoExts[ext]
 	}
 	return audioExts[ext]
 }
@@ -127,6 +136,17 @@ func (l *SyncCompareLogic) getLocalFileMap(compareType *generated.SyncCompareReq
 		}
 		for _, img := range images {
 			localMap[filepath.Base(img.FilePath)] = img.FilePath
+		}
+		return localMap, nil
+	}
+
+	if compareType != nil && *compareType == generated.SyncCompareRequestCompareTypeVideo {
+		videos, err := l.Repo.GetAllVideo()
+		if err != nil {
+			return nil, err
+		}
+		for _, video := range videos {
+			localMap[filepath.Base(video.FilePath)] = video.FilePath
 		}
 		return localMap, nil
 	}

@@ -128,6 +128,9 @@ func (l *SyncExecuteLogic) getLocalDir(compareType *generated.SyncExecuteRequest
 	if compareType != nil && *compareType == generated.SyncExecuteRequestCompareTypeImage {
 		return config.ImageDir, nil
 	}
+	if compareType != nil && *compareType == generated.SyncExecuteRequestCompareTypeVideo {
+		return config.VideoDir, nil
+	}
 
 	return config.AudioDir, nil
 }

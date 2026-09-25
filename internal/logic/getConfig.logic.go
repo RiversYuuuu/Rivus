@@ -25,6 +25,7 @@ func (l *GetConfigLogic) GetConfig() (*generated.GetConfigResponse, error) {
 			AudioDir:       &config.AudioDir,
 			AcoustidApiKey: &config.AcoustIDApiKey,
 			ImageDir:       &config.ImageDir,
+			VideoDir:       &config.VideoDir,
 		},
 	}
 

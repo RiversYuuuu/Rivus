@@ -11,6 +11,7 @@ import (
 const (
 	SyncCompareRequestCompareTypeAudio SyncCompareRequestCompareType = "audio"
 	SyncCompareRequestCompareTypeImage SyncCompareRequestCompareType = "image"
+	SyncCompareRequestCompareTypeVideo SyncCompareRequestCompareType = "video"
 )
 
 // Valid indicates whether the value is a known member of the SyncCompareRequestCompareType enum.
@@ -20,23 +21,7 @@ func (e SyncCompareRequestCompareType) Valid() bool {
 		return true
 	case SyncCompareRequestCompareTypeImage:
 		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for SyncCompareRequestProtocol.
-const (
-	SyncCompareRequestProtocolFtp  SyncCompareRequestProtocol = "ftp"
-	SyncCompareRequestProtocolSftp SyncCompareRequestProtocol = "sftp"
-)
-
-// Valid indicates whether the value is a known member of the SyncCompareRequestProtocol enum.
-func (e SyncCompareRequestProtocol) Valid() bool {
-	switch e {
-	case SyncCompareRequestProtocolFtp:
-		return true
-	case SyncCompareRequestProtocolSftp:
+	case SyncCompareRequestCompareTypeVideo:
 		return true
 	default:
 		return false
@@ -47,6 +32,7 @@ func (e SyncCompareRequestProtocol) Valid() bool {
 const (
 	SyncExecuteRequestCompareTypeAudio SyncExecuteRequestCompareType = "audio"
 	SyncExecuteRequestCompareTypeImage SyncExecuteRequestCompareType = "image"
+	SyncExecuteRequestCompareTypeVideo SyncExecuteRequestCompareType = "video"
 )
 
 // Valid indicates whether the value is a known member of the SyncExecuteRequestCompareType enum.
@@ -56,41 +42,7 @@ func (e SyncExecuteRequestCompareType) Valid() bool {
 		return true
 	case SyncExecuteRequestCompareTypeImage:
 		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for SyncExecuteRequestProtocol.
-const (
-	SyncExecuteRequestProtocolFtp  SyncExecuteRequestProtocol = "ftp"
-	SyncExecuteRequestProtocolSftp SyncExecuteRequestProtocol = "sftp"
-)
-
-// Valid indicates whether the value is a known member of the SyncExecuteRequestProtocol enum.
-func (e SyncExecuteRequestProtocol) Valid() bool {
-	switch e {
-	case SyncExecuteRequestProtocolFtp:
-		return true
-	case SyncExecuteRequestProtocolSftp:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for SyncTestConnectionRequestProtocol.
-const (
-	SyncTestConnectionRequestProtocolFtp  SyncTestConnectionRequestProtocol = "ftp"
-	SyncTestConnectionRequestProtocolSftp SyncTestConnectionRequestProtocol = "sftp"
-)
-
-// Valid indicates whether the value is a known member of the SyncTestConnectionRequestProtocol enum.
-func (e SyncTestConnectionRequestProtocol) Valid() bool {
-	switch e {
-	case SyncTestConnectionRequestProtocolFtp:
-		return true
-	case SyncTestConnectionRequestProtocolSftp:
+	case SyncExecuteRequestCompareTypeVideo:
 		return true
 	default:
 		return false
@@ -171,16 +123,16 @@ func (e SearchAudioParamsSortOrder) Valid() bool {
 
 // Defines values for SearchImageParamsSortBy.
 const (
-	FileSize SearchImageParamsSortBy = "file_size"
-	ShotAt   SearchImageParamsSortBy = "shot_at"
+	SearchImageParamsSortByFileSize SearchImageParamsSortBy = "file_size"
+	SearchImageParamsSortByShotAt   SearchImageParamsSortBy = "shot_at"
 )
 
 // Valid indicates whether the value is a known member of the SearchImageParamsSortBy enum.
 func (e SearchImageParamsSortBy) Valid() bool {
 	switch e {
-	case FileSize:
+	case SearchImageParamsSortByFileSize:
 		return true
-	case ShotAt:
+	case SearchImageParamsSortByShotAt:
 		return true
 	default:
 		return false
@@ -205,18 +157,36 @@ func (e SearchImageParamsSortOrder) Valid() bool {
 	}
 }
 
-// Defines values for SyncBrowseParamsProtocol.
+// Defines values for SearchVideoParamsSortBy.
 const (
-	SyncBrowseParamsProtocolFtp  SyncBrowseParamsProtocol = "ftp"
-	SyncBrowseParamsProtocolSftp SyncBrowseParamsProtocol = "sftp"
+	SearchVideoParamsSortByFileSize SearchVideoParamsSortBy = "file_size"
+	SearchVideoParamsSortByShotAt   SearchVideoParamsSortBy = "shot_at"
 )
 
-// Valid indicates whether the value is a known member of the SyncBrowseParamsProtocol enum.
-func (e SyncBrowseParamsProtocol) Valid() bool {
+// Valid indicates whether the value is a known member of the SearchVideoParamsSortBy enum.
+func (e SearchVideoParamsSortBy) Valid() bool {
 	switch e {
-	case SyncBrowseParamsProtocolFtp:
+	case SearchVideoParamsSortByFileSize:
 		return true
-	case SyncBrowseParamsProtocolSftp:
+	case SearchVideoParamsSortByShotAt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchVideoParamsSortOrder.
+const (
+	SearchVideoParamsSortOrderAsc  SearchVideoParamsSortOrder = "asc"
+	SearchVideoParamsSortOrderDesc SearchVideoParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the SearchVideoParamsSortOrder enum.
+func (e SearchVideoParamsSortOrder) Valid() bool {
+	switch e {
+	case SearchVideoParamsSortOrderAsc:
+		return true
+	case SearchVideoParamsSortOrderDesc:
 		return true
 	default:
 		return false
@@ -298,6 +268,11 @@ type Config struct {
 	//
 	// Example: /c/users/default/Picture
 	ImageDir *string `json:"image_dir,omitempty"`
+
+	// VideoDir 视频目录
+	//
+	// Example: /c/users/default/Video
+	VideoDir *string `json:"video_dir,omitempty"`
 }
 
 // DeleteAudioRequest defines model for DeleteAudioRequest.
@@ -475,6 +450,15 @@ type ScanImageResponse struct {
 	Message string `json:"message"`
 }
 
+// ScanVideoResponse defines model for ScanVideoResponse.
+type ScanVideoResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // ScrapeAudioResponse defines model for ScrapeAudioResponse.
 type ScrapeAudioResponse struct {
 	// Code Example: 0
@@ -520,6 +504,19 @@ type SearchImageResponse struct {
 	Message string `json:"message"`
 }
 
+// SearchVideoResponse defines model for SearchVideoResponse.
+type SearchVideoResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+	Data struct {
+		Pagination *Pagination  `json:"pagination,omitempty"`
+		VideoList  *[]VideoItem `json:"video_list,omitempty"`
+	} `json:"data"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // SetConfigRequest defines model for SetConfigRequest.
 type SetConfigRequest = Config
 
@@ -550,30 +547,24 @@ type SyncCompareRequest struct {
 	// CompareType 对比类型
 	CompareType *SyncCompareRequestCompareType `json:"compare_type,omitempty"`
 
-	// Directory 远程目录路径
+	// Directory FTP目录路径
 	Directory *string `json:"directory,omitempty"`
 
-	// Ip 服务器IP地址
+	// Ip FTP IP地址
 	Ip *string `json:"ip,omitempty"`
 
-	// Password 密码
+	// Password FTP密码
 	Password *string `json:"password,omitempty"`
 
-	// Port 服务器端口号
+	// Port FTP端口号
 	Port *int `json:"port,omitempty"`
 
-	// Protocol 协议类型
-	Protocol *SyncCompareRequestProtocol `json:"protocol,omitempty"`
-
-	// Username 用户名
+	// Username FTP用户名
 	Username *string `json:"username,omitempty"`
 }
 
 // SyncCompareRequestCompareType 对比类型
 type SyncCompareRequestCompareType string
-
-// SyncCompareRequestProtocol 协议类型
-type SyncCompareRequestProtocol string
 
 // SyncCompareResponse defines model for SyncCompareResponse.
 type SyncCompareResponse struct {
@@ -602,20 +593,17 @@ type SyncExecuteRequest struct {
 	// CompareType 同步类型
 	CompareType *SyncExecuteRequestCompareType `json:"compare_type,omitempty"`
 
-	// Directory 远程目录路径
+	// Directory FTP目录路径
 	Directory *string `json:"directory,omitempty"`
 
-	// Ip 服务器IP地址
+	// Ip FTP IP地址
 	Ip *string `json:"ip,omitempty"`
 
-	// Password 密码
+	// Password FTP密码
 	Password *string `json:"password,omitempty"`
 
-	// Port 服务器端口号
+	// Port FTP端口号
 	Port *int `json:"port,omitempty"`
-
-	// Protocol 协议类型
-	Protocol *SyncExecuteRequestProtocol `json:"protocol,omitempty"`
 
 	// ToDownload 待下载的文件列表
 	ToDownload *[]string `json:"to_download,omitempty"`
@@ -623,15 +611,12 @@ type SyncExecuteRequest struct {
 	// ToUpload 待上传的文件列表
 	ToUpload *[]string `json:"to_upload,omitempty"`
 
-	// Username 用户名
+	// Username FTP用户名
 	Username *string `json:"username,omitempty"`
 }
 
 // SyncExecuteRequestCompareType 同步类型
 type SyncExecuteRequestCompareType string
-
-// SyncExecuteRequestProtocol 协议类型
-type SyncExecuteRequestProtocol string
 
 // SyncExecuteResponse defines model for SyncExecuteResponse.
 type SyncExecuteResponse struct {
@@ -644,24 +629,18 @@ type SyncExecuteResponse struct {
 
 // SyncTestConnectionRequest defines model for SyncTestConnectionRequest.
 type SyncTestConnectionRequest struct {
-	// Ip 服务器IP地址
+	// Ip FTP IP地址
 	Ip *string `json:"ip,omitempty"`
 
-	// Password 密码
+	// Password FTP密码
 	Password *string `json:"password,omitempty"`
 
-	// Port 服务器端口号
+	// Port FTP端口号
 	Port *int `json:"port,omitempty"`
 
-	// Protocol 协议类型
-	Protocol *SyncTestConnectionRequestProtocol `json:"protocol,omitempty"`
-
-	// Username 用户名
+	// Username FTP用户名
 	Username *string `json:"username,omitempty"`
 }
-
-// SyncTestConnectionRequestProtocol 协议类型
-type SyncTestConnectionRequestProtocol string
 
 // SyncTestConnectionResponse defines model for SyncTestConnectionResponse.
 type SyncTestConnectionResponse struct {
@@ -709,6 +688,73 @@ type UploadResponse struct {
 
 	// Message Example: success
 	Message string `json:"message"`
+}
+
+// VideoItem defines model for VideoItem.
+type VideoItem struct {
+	// CreateTime 创建时间
+	CreateTime *string `json:"create_time,omitempty"`
+
+	// DeleteTime 删除时间
+	DeleteTime *string `json:"delete_time,omitempty"`
+
+	// FileExt 文件格式
+	//
+	// Example: jpg
+	FileExt *string `json:"file_ext,omitempty"`
+
+	// FileMd5 文件哈希值
+	//
+	// Example: 1234567890abcdef1234567890abcdef
+	FileMd5 *string `json:"file_md5,omitempty"`
+
+	// FilePath 文件路径
+	//
+	// Example: /path/to/image.jpg
+	FilePath *string `json:"file_path,omitempty"`
+
+	// FileSize 文件字节大小
+	//
+	// Example: 1024
+	FileSize *int `json:"file_size,omitempty"`
+
+	// Height 高度（像素）
+	//
+	// Example: 768
+	Height *int `json:"height,omitempty"`
+
+	// Id 视频ID
+	//
+	// Example: 1
+	Id *int `json:"id,omitempty"`
+
+	// Latitude 纬度
+	//
+	// Example: 39.9042
+	Latitude *float64 `json:"latitude,omitempty"`
+
+	// Longitude 经度
+	//
+	// Example: 116.4074
+	Longitude *float64 `json:"longitude,omitempty"`
+
+	// Orientation 朝向（1-8，对应EXIF标准，用于自动转正）
+	//
+	// Example: 1
+	Orientation *int `json:"orientation,omitempty"`
+
+	// ShotAt 拍摄时间
+	//
+	// Example: 2023-01-01T12:00:00Z
+	ShotAt *string `json:"shot_at,omitempty"`
+
+	// UpdateTime 更新时间
+	UpdateTime *string `json:"update_time,omitempty"`
+
+	// Width 宽度（像素）
+	//
+	// Example: 1024
+	Width *int `json:"width,omitempty"`
 }
 
 // FetchLyricParams defines parameters for FetchLyric.
@@ -804,16 +850,36 @@ type GetImageThumbParams struct {
 
 // SyncBrowseParams defines parameters for SyncBrowse.
 type SyncBrowseParams struct {
-	Directory *string                   `form:"directory,omitempty" json:"directory,omitempty"`
-	Ip        *string                   `form:"ip,omitempty" json:"ip,omitempty"`
-	Port      *int                      `form:"port,omitempty" json:"port,omitempty"`
-	Username  *string                   `form:"username,omitempty" json:"username,omitempty"`
-	Password  *string                   `form:"password,omitempty" json:"password,omitempty"`
-	Protocol  *SyncBrowseParamsProtocol `form:"protocol,omitempty" json:"protocol,omitempty"`
+	Directory *string `form:"directory,omitempty" json:"directory,omitempty"`
+	Ip        *string `form:"ip,omitempty" json:"ip,omitempty"`
+	Port      *int    `form:"port,omitempty" json:"port,omitempty"`
+	Username  *string `form:"username,omitempty" json:"username,omitempty"`
+	Password  *string `form:"password,omitempty" json:"password,omitempty"`
 }
 
-// SyncBrowseParamsProtocol defines parameters for SyncBrowse.
-type SyncBrowseParamsProtocol string
+// SearchVideoParams defines parameters for SearchVideo.
+type SearchVideoParams struct {
+	Page      *int                        `form:"page,omitempty" json:"page,omitempty"`
+	PageSize  *int                        `form:"page_size,omitempty" json:"page_size,omitempty"`
+	SortBy    *SearchVideoParamsSortBy    `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+	SortOrder *SearchVideoParamsSortOrder `form:"sort_order,omitempty" json:"sort_order,omitempty"`
+}
+
+// SearchVideoParamsSortBy defines parameters for SearchVideo.
+type SearchVideoParamsSortBy string
+
+// SearchVideoParamsSortOrder defines parameters for SearchVideo.
+type SearchVideoParamsSortOrder string
+
+// GetVideoSourceParams defines parameters for GetVideoSource.
+type GetVideoSourceParams struct {
+	Id int `form:"id" json:"id"`
+}
+
+// GetVideoThumbParams defines parameters for GetVideoThumb.
+type GetVideoThumbParams struct {
+	Id int `form:"id" json:"id"`
+}
 
 // DeleteAudioJSONRequestBody defines body for DeleteAudio for application/json ContentType.
 type DeleteAudioJSONRequestBody = DeleteAudioRequest

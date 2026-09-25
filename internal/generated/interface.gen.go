@@ -85,6 +85,18 @@ type ServerInterface interface {
 
 	// (POST /sync/test-connection)
 	SyncTestConnection(c *gin.Context)
+	// ScanVideo 扫描视频目录，构建视频元数据
+	// (GET /video/scan)
+	ScanVideo(c *gin.Context)
+	// SearchVideo 搜索视频
+	// (GET /video/search)
+	SearchVideo(c *gin.Context, params SearchVideoParams)
+	// GetVideoSource 获取视频
+	// (GET /video/source)
+	GetVideoSource(c *gin.Context, params GetVideoSourceParams)
+	// GetVideoThumb 获取视频缩略图
+	// (GET /video/thumb)
+	GetVideoThumb(c *gin.Context, params GetVideoThumbParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -633,14 +645,6 @@ func (siw *ServerInterfaceWrapper) SyncBrowse(c *gin.Context) {
 		return
 	}
 
-	// ------------- Optional query parameter "protocol" -------------
-
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "protocol", c.Request.URL.Query(), &params.Protocol, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter protocol: %w", err), http.StatusBadRequest)
-		return
-	}
-
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
 		if c.IsAborted() {
@@ -688,6 +692,124 @@ func (siw *ServerInterfaceWrapper) SyncTestConnection(c *gin.Context) {
 	}
 
 	siw.Handler.SyncTestConnection(c)
+}
+
+// ScanVideo operation middleware
+func (siw *ServerInterfaceWrapper) ScanVideo(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ScanVideo(c)
+}
+
+// SearchVideo operation middleware
+func (siw *ServerInterfaceWrapper) SearchVideo(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchVideoParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page_size: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_by" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_by", c.Request.URL.Query(), &params.SortBy, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_by: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort_order" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort_order", c.Request.URL.Query(), &params.SortOrder, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort_order: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SearchVideo(c, params)
+}
+
+// GetVideoSource operation middleware
+func (siw *ServerInterfaceWrapper) GetVideoSource(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetVideoSourceParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetVideoSource(c, params)
+}
+
+// GetVideoThumb operation middleware
+func (siw *ServerInterfaceWrapper) GetVideoThumb(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetVideoThumbParams
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", c.Request.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetVideoThumb(c, params)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -741,4 +863,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/image/search", wrapper.SearchImage)
 	router.GET(options.BaseURL+"/image/source", wrapper.GetImageSource)
 	router.GET(options.BaseURL+"/image/thumb", wrapper.GetImageThumb)
+	router.GET(options.BaseURL+"/video/scan", wrapper.ScanVideo)
+	router.GET(options.BaseURL+"/video/search", wrapper.SearchVideo)
+	router.GET(options.BaseURL+"/video/source", wrapper.GetVideoSource)
+	router.GET(options.BaseURL+"/video/thumb", wrapper.GetVideoThumb)
 }

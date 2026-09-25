@@ -31,11 +31,16 @@ func (l *SetConfigLogic) SetConfig(req *generated.SetConfigRequest) (*generated.
 	if req.ImageDir != nil {
 		imageDir = *req.ImageDir
 	}
+	var videoDir string
+	if req.VideoDir != nil {
+		videoDir = *req.VideoDir
+	}
 
 	config := model.Config{
 		AudioDir:       audioDir,
 		AcoustIDApiKey: acoustidApiKey,
 		ImageDir:       imageDir,
+		VideoDir:       videoDir,
 	}
 
 	// 校验音频目录是否存在
@@ -51,6 +56,14 @@ func (l *SetConfigLogic) SetConfig(req *generated.SetConfigRequest) (*generated.
 		if _, err := os.Stat(config.ImageDir); os.IsNotExist(err) {
 			l.Logger.Warn("ImageDir not exist, err:", "err", err, "path", config.ImageDir)
 			return nil, errors.New("ImageDir not exist")
+		}
+	}
+
+	// 校验视频目录是否存在
+	if config.VideoDir != "" {
+		if _, err := os.Stat(config.VideoDir); os.IsNotExist(err) {
+			l.Logger.Warn("VideoDir not exist, err:", "err", err, "path", config.VideoDir)
+			return nil, errors.New("VideoDir not exist")
 		}
 	}
 

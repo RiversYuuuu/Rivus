@@ -5,6 +5,7 @@ type Config struct {
 	AudioDir       string
 	AcoustIDApiKey string `gorm:"size:64"`
 	ImageDir       string
+	VideoDir       string
 }
 
 func (Config) TableName() string {

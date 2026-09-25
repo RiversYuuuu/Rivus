@@ -1,4 +1,4 @@
-.PHONY: gen gen-type gen-server gen-handler gen-logic run icon build
+.PHONY: gen gen-type gen-server gen-handler gen-logic run build unpack-bin-tools
 
 gen: gen-type gen-server gen-handler gen-logic
 
@@ -20,12 +20,15 @@ gen-logic:
 	go run tools/codegen/main.go -type logic
 	goimports -w internal/logic/*.go
 
-run:
+unpack-bin-tools:
+	@rm -f bin/*.exe
+	@tar -zxvf bin/binary-tools.tar.gz -C bin
+
+run: unpack-bin-tools
 	go mod tidy
 	go run main.go
 
-icon:
-	go run github.com/akavel/rsrc@latest -ico icon.ico -o rsrc.syso
-
-build: icon
+build: unpack-bin-tools
+	go run github.com/akavel/rsrc@latest -ico assets/icon.ico -o assets/rsrc.syso
 	go build -ldflags="-H windowsgui -s -w" -o Rivus.exe
+	@rm -f assets/rsrc.syso

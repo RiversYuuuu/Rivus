@@ -149,8 +149,8 @@ img.cover-err{visibility:hidden}
 @media (max-width:720px){.topbar{gap:10px}}
 
 /* ---------- SYNC MODAL ---------- */
-#btnSync,#btnImgSync{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 50%,transparent)}
-#btnSync:hover,#btnImgSync:hover{background:color-mix(in srgb,var(--teal) 12%,transparent);border-color:var(--teal)}
+#btnSync,#btnImgSync,#btnVideoSync{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 50%,transparent)}
+#btnSync:hover,#btnImgSync:hover,#btnVideoSync:hover{background:color-mix(in srgb,var(--teal) 12%,transparent);border-color:var(--teal)}
 .sync-modal{width:min(580px,100%)}
 .m-ic.sync{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--teal)}
 .sync-steps{display:flex;gap:0;padding:0 24px;margin-top:14px;border-bottom:1px solid var(--line)}

@@ -21,6 +21,14 @@ async function loadHomeStatus() {
         $('#imageStatus').classList.add('ok');
         $('#imageMeta').classList.remove('hidden');
       }
+
+      state.videoDir = cfg.data.video_dir || '';
+      if (state.videoDir) {
+        $('#videoStatus').textContent = '已就绪';
+        $('#videoStatus').classList.remove('warn');
+        $('#videoStatus').classList.add('ok');
+        $('#videoMeta').classList.remove('hidden');
+      }
     }
 
     const res = await apiGet('/audio/search', { page: 1, page_size: 1 });
@@ -68,6 +76,22 @@ async function loadHomeStatus() {
         }
       }
     }
+
+    const vidRes = await apiGet('/video/search', { page: 1, page_size: 1 });
+    if (vidRes.code === 0 && vidRes.data && vidRes.data.pagination) {
+      const total = vidRes.data.pagination.total || 0;
+      $('#vmCount').textContent = total;
+      if (total > 0) {
+        const allVidRes = await apiGet('/video/search', { page: 1, page_size: Math.min(total, 1000) });
+        if (allVidRes.code === 0 && allVidRes.data && allVidRes.data.video_list) {
+          let totalSize = 0;
+          allVidRes.data.video_list.forEach((v) => {
+            totalSize += (v.file_size || 0);
+          });
+          $('#vmSize').textContent = formatSize(totalSize);
+        }
+      }
+    }
   } catch (e) {
     $('#audioStatus').textContent = '未连接';
     $('#audioStatus').classList.remove('ok');
@@ -75,6 +99,9 @@ async function loadHomeStatus() {
     $('#imageStatus').textContent = '未连接';
     $('#imageStatus').classList.remove('ok');
     $('#imageStatus').classList.add('warn');
+    $('#videoStatus').textContent = '未连接';
+    $('#videoStatus').classList.remove('ok');
+    $('#videoStatus').classList.add('warn');
   }
 }
 
@@ -94,6 +121,14 @@ function bindEvents() {
       window.location.href = '/imagepage/console';
     } else {
       window.location.href = '/imagepage/setting';
+    }
+  });
+
+  $('#cardVideo').addEventListener('click', () => {
+    if (state.videoDir) {
+      window.location.href = '/videopage/console';
+    } else {
+      window.location.href = '/videopage/setting';
     }
   });
 

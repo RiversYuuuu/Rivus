@@ -80,6 +80,12 @@ func main() {
 	r.GET("/imagepage/console", func(c *gin.Context) {
 		c.File("./dist/assets/html/imagepage/console.html")
 	})
+	r.GET("/videopage/setting", func(c *gin.Context) {
+		c.File("./dist/assets/html/videopage/setting.html")
+	})
+	r.GET("/videopage/console", func(c *gin.Context) {
+		c.File("./dist/assets/html/videopage/console.html")
+	})
 
 	r.NoRoute(func(c *gin.Context) {
 		c.Redirect(302, "/")

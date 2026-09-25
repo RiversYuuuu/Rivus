@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	FPCALC_BIN_PATH = "bin/fpcalc.exe"
-	ZHHZ_BIN_PATH   = "bin/zhhz.exe"
+	FPCALC_BIN_PATH  = "bin/fpcalc.exe"
+	ZHHZ_BIN_PATH    = "bin/zhhz.exe"
+	FFMPEG_BIN_PATH  = "bin/ffmpeg.exe"
+	FFPROBE_BIN_PATH = "bin/ffprobe.exe"
 )
 
 func TraditionnalToSimplified(TraditionalString string) (string, error) {
@@ -84,4 +86,21 @@ func SaveFile(fileHeader *multipart.FileHeader, filePath string) error {
 
 	_, err = io.Copy(dst, src)
 	return err
+}
+
+func GenerateVideoThumbnail(videoPath, outputPath string) error {
+	cmd := exec.Command(FFMPEG_BIN_PATH,
+		"-ss", "1",
+		"-i", videoPath,
+		"-vframes", "1",
+		"-q:v", "2",
+		"-vf", "scale=480:270:force_original_aspect_ratio=increase,crop=480:270",
+		"-y",
+		outputPath,
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ffmpeg failed: %v, output: %s", err, string(output))
+	}
+	return nil
 }

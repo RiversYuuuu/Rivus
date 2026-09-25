@@ -73,11 +73,20 @@
           <span class="enter" id="imageEnter">进入模块 <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
         </div>
       </article>
-      <article class="mod-card mod-locked card" data-name="视频管理">
-        <span class="lock-tag">即将上线</span>
-        <div class="lock-ic"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.2"/><path d="m10 8 6 4-6 4z"/></svg></div>
-        <h4>视频管理</h4><div class="mono mod-en">VIDEO · SOON</div>
-        <p>视频库索引、章节标记与缩略图墙。</p>
+      <article class="mod-card mod-video card" id="cardVideo" tabindex="0" role="button" aria-label="进入视频管理">
+        <span class="status-chip warn" id="videoStatus">未初始化</span>
+        <div class="mod-icon-row">
+          <svg class="logo-disc" viewBox="0 0 48 48" fill="none"><rect x="4" y="4" width="40" height="40" rx="6" fill="var(--bg2)" stroke="var(--orange)" stroke-width="2"/><polygon points="20,14 34,24 20,34" fill="none" stroke="var(--orange)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><h3>视频管理</h3><div class="mono mod-en">VIDEO</div></div>
+        </div>
+        <p class="mod-desc">扫描本地目录建立视频数据库，支持按文件名 / 时长 / 分辨率检索，并可编辑、删除与恢复条目。</p>
+        <div class="audio-meta hidden" id="videoMeta">
+          <div class="am"><b id="vmCount">0</b><span>视频</span></div>
+          <div class="am"><b id="vmSize">0</b><span>占用</span></div>
+        </div>
+        <div class="mod-foot">
+          <span class="enter" id="videoEnter">进入模块 <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
       </article>
     </div>
   </div>
