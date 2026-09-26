@@ -84,5 +84,7 @@
 .mod-locked p{font-size:12px;color:var(--ink3);line-height:1.6;margin-top:auto}
 .lock-tag{position:absolute;top:14px;right:14px;font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:10px;letter-spacing:.08em;color:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:3px 8px}
 
+.js-shutdown:hover{color:var(--rose);border-color:var(--rose)}
+
 @media (max-width:1020px){.home-head{grid-template-columns:1fr;gap:24px}.mod-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:720px){.mod-grid{grid-template-columns:1fr}}

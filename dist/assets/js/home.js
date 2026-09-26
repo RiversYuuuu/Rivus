@@ -108,6 +108,40 @@ async function loadHomeStatus() {
 function bindEvents() {
   bindThemeButtons();
 
+  const shutdownBtn = $('.js-shutdown');
+  if (shutdownBtn) {
+    shutdownBtn.addEventListener('click', () => {
+      $('#ovShutdown').classList.add('show');
+    });
+  }
+
+  const ovShutdown = $('#ovShutdown');
+  if (ovShutdown) {
+    ovShutdown.addEventListener('click', (e) => {
+      if (e.target === ovShutdown) ovShutdown.classList.remove('show');
+    });
+  }
+
+  const btnShutdownCancel = $('#btnShutdownCancel');
+  if (btnShutdownCancel) {
+    btnShutdownCancel.addEventListener('click', () => {
+      $('#ovShutdown').classList.remove('show');
+    });
+  }
+
+  const btnShutdownOk = $('#btnShutdownOk');
+  if (btnShutdownOk) {
+    btnShutdownOk.addEventListener('click', async () => {
+      btnShutdownOk.disabled = true;
+      btnShutdownOk.innerHTML = '<span class="spin"></span>关闭中…';
+      if (btnShutdownCancel) btnShutdownCancel.disabled = true;
+      try {
+        await apiGet('/shutdown');
+      } catch (e) {}
+      window.location.reload();
+    });
+  }
+
   $('#cardAudio').addEventListener('click', () => {
     if (state.audioDir) {
       window.location.href = '/audiopage/console';

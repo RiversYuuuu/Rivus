@@ -693,6 +693,15 @@ type SetConfigResponse struct {
 	Message string `json:"message"`
 }
 
+// ShutdownResponse defines model for ShutdownResponse.
+type ShutdownResponse struct {
+	// Code Example: 0
+	Code int `json:"code"`
+
+	// Message Example: success
+	Message string `json:"message"`
+}
+
 // SyncBrowseResponse defines model for SyncBrowseResponse.
 type SyncBrowseResponse struct {
 	// Code Example: 0

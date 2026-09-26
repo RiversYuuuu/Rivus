@@ -67,6 +67,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BrowseResponse'
+  /shutdown:
+    get:
+      operationId: Shutdown
+      summary: 关闭服务
+      description: 用于关闭服务
+      responses:
+        '200':
+          description: 服务已关闭
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShutdownResponse'
   /audio/scan:
     get:
       operationId: ScanAudio
@@ -1533,6 +1545,16 @@ components:
             type: integer
           description: 图片ID列表
     RestoreImageResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+    ShutdownResponse:
       type: object
       required: [code, message]
       properties:

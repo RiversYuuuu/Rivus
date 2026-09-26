@@ -82,6 +82,9 @@ type ServerInterface interface {
 	// Ping 健康检查接口
 	// (GET /ping)
 	Ping(c *gin.Context)
+	// Shutdown 关闭服务
+	// (GET /shutdown)
+	Shutdown(c *gin.Context)
 
 	// (GET /sync/browse)
 	SyncBrowse(c *gin.Context, params SyncBrowseParams)
@@ -691,6 +694,19 @@ func (siw *ServerInterfaceWrapper) Ping(c *gin.Context) {
 	siw.Handler.Ping(c)
 }
 
+// Shutdown operation middleware
+func (siw *ServerInterfaceWrapper) Shutdown(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.Shutdown(c)
+}
+
 // SyncBrowse operation middleware
 func (siw *ServerInterfaceWrapper) SyncBrowse(c *gin.Context) {
 
@@ -1015,6 +1031,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/config", wrapper.GetConfig)
 	router.POST(options.BaseURL+"/config", wrapper.SetConfig)
 	router.GET(options.BaseURL+"/browse", wrapper.Browse)
+	router.GET(options.BaseURL+"/shutdown", wrapper.Shutdown)
 	router.GET(options.BaseURL+"/audio/scan", wrapper.ScanAudio)
 	router.GET(options.BaseURL+"/audio/search", wrapper.SearchAudio)
 	router.DELETE(options.BaseURL+"/audio/delete", wrapper.DeleteAudio)
