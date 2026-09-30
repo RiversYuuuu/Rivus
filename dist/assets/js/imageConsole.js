@@ -448,6 +448,7 @@ function toggleBatchMode() {
       $('#imgBinBatchBar').classList.add('show');
       $('#imgContent').classList.add('batch-mode');
       $$('.photo-check').forEach((el) => el.style.opacity = '1');
+      $('#btnBinBatchCheckAll').dataset.state = 'none';
     } else {
       exitBinBatchMode();
     }
@@ -458,6 +459,7 @@ function toggleBatchMode() {
       $('#imgBatchBar').classList.add('show');
       $('#imgContent').classList.add('batch-mode');
       $$('.photo-check').forEach((el) => el.style.opacity = '1');
+      $('#btnBatchCheckAll').dataset.state = 'none';
     } else {
       exitBatchMode();
     }
@@ -529,10 +531,22 @@ function toggleSelectAll() {
 
 function updateBatchCount() {
   $('#batchSelCount').textContent = imgState.selected.size;
+  const list = imgState.filtered;
+  const btn = $('#btnBatchCheckAll');
+  if (!btn) return;
+  if (imgState.selected.size === 0) btn.dataset.state = 'none';
+  else if (imgState.selected.size === list.length) btn.dataset.state = 'all';
+  else btn.dataset.state = 'some';
 }
 
 function updateBinBatchCount() {
   $('#binBatchSelCount').textContent = imgState.selected.size;
+  const list = imgState.binImages;
+  const btn = $('#btnBinBatchCheckAll');
+  if (!btn) return;
+  if (imgState.selected.size === 0) btn.dataset.state = 'none';
+  else if (imgState.selected.size === list.length) btn.dataset.state = 'all';
+  else btn.dataset.state = 'some';
 }
 
 function batchDelete() {

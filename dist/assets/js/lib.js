@@ -6,8 +6,8 @@
 async function loadLibrary() {
   const tab = state.currentTab;
   const params = {
-    page: state.page,
-    page_size: state.pageSize,
+    page: 1,
+    page_size: 1,
     sort_by: state.sortBy,
     sort_order: state.sortOrder,
   };
@@ -21,11 +21,34 @@ async function loadLibrary() {
   $('#tbody').innerHTML = '<tr class="loading"><td colspan="8" class="load-cell"><span class="spin"></span>加载中...</td></tr>';
 
   try {
+    let countRes;
+    if (tab === 'bin') {
+      countRes = await apiGet('/audio/recyclebin', params);
+    } else {
+      countRes = await apiGet('/audio/search', params);
+    }
+
+    if (countRes.code !== 0) {
+      $('#tbody').innerHTML = '<tr><td colspan="8" class="load-cell">加载失败</td></tr>';
+      return;
+    }
+
+    const total = countRes.data.pagination?.total || 0;
+    if (total === 0) {
+      renderTable([], { total: 0 }, tab === 'bin');
+      Batch.refreshAfterLoad(0);
+      updateStats();
+      updatePager({ total: 0 });
+      if (tab !== 'bin') $('#cntLib').textContent = 0;
+      return;
+    }
+
+    const allParams = { ...params, page_size: total };
     let res;
     if (tab === 'bin') {
-      res = await apiGet('/audio/recyclebin', params);
+      res = await apiGet('/audio/recyclebin', allParams);
     } else {
-      res = await apiGet('/audio/search', params);
+      res = await apiGet('/audio/search', allParams);
     }
 
     if (res.code !== 0) {
@@ -65,14 +88,12 @@ function renderTable(list, pag, isBin = false) {
   $('#emptyBox').classList.add('hidden');
 
   tbody.innerHTML = list.map((a, i) => {
-    const idx = (state.page - 1) * state.pageSize + i + 1;
+    const idx = i + 1;
     const title = a.title || '未知歌曲';
     const artist = a.artist || '未知歌手';
     const album = a.album || '—';
     const ext = (a.file_ext || '').toUpperCase();
     const size = formatSize(a.file_size || 0);
-    const fname = basename(a.file_path || '');
-    const md5 = (a.file_md5 || '').substring(0, 8);
     const extClass = getExtClass(ext);
     const id = a.id || 0;
 
@@ -88,8 +109,6 @@ function renderTable(list, pag, isBin = false) {
       <td class="c-album">${esc(album)}</td>
       <td class="c-fmt"><span class="badge ${extClass}">${ext || '—'}</span></td>
       <td class="c-size">${size}</td>
-      <td class="c-fname" title="${esc(a.file_path || '')}">${esc(fname)}</td>
-      <td class="c-md5"><code>${md5 || '—'}</code></td>
       <td class="c-act">
         ${isBin ? `
           <button class="act-btn a-restore" data-action="restore" data-id="${id}" title="恢复"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-7.7L3 8"/><path d="M3 3v5h5"/></svg></button>
@@ -200,80 +219,7 @@ async function updateStats() {
 
 function updatePager(pag) {
   const total = pag.total || 0;
-  const pages = pag.total_pages || 1;
-  const cur = state.page;
-
   $('#pgCount').innerHTML = `<b>${total}</b> 条`;
-
-  const nums = $('#pgNums');
-  nums.innerHTML = '';
-
-  const prevBtn = document.createElement('button');
-  prevBtn.className = 'pg-btn nav';
-  prevBtn.disabled = cur <= 1;
-  prevBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> 上一页';
-  prevBtn.addEventListener('click', () => { state.page = cur - 1; loadLibrary(); });
-  nums.appendChild(prevBtn);
-
-  const items = paginateNums(cur, pages);
-  items.forEach(item => {
-    if (item === '...') {
-      const g = document.createElement('span');
-      g.className = 'pg-gap';
-      g.textContent = '…';
-      nums.appendChild(g);
-    } else {
-      nums.appendChild(createPgBtn(item));
-    }
-  });
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'pg-btn nav';
-  nextBtn.disabled = cur >= pages;
-  nextBtn.innerHTML = '下一页 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
-  nextBtn.addEventListener('click', () => { state.page = cur + 1; loadLibrary(); });
-  nums.appendChild(nextBtn);
-
-  const jumpInput = $('#pgJump');
-  if (jumpInput) {
-    jumpInput.value = '';
-    jumpInput.max = pages;
-    jumpInput.onkeydown = (e) => {
-      if (e.key === 'Enter') {
-        const n = parseInt(jumpInput.value);
-        if (n >= 1 && n <= pages) { state.page = n; loadLibrary(); }
-      }
-    };
-  }
-}
-
-function paginateNums(cur, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const items = [1];
-  let last = 1;
-  const range = (s, e) => { const a = []; for (let i = s; i <= e; i++) a.push(i); return a; };
-  if (cur <= 4) {
-    items.push(...range(2, 5));
-    last = 5;
-  } else if (cur >= total - 3) {
-    items.push('...');
-    items.push(...range(total - 4, total));
-    last = total;
-  } else {
-    items.push('...');
-    items.push(...range(cur - 1, cur + 1));
-    last = cur + 1;
-  }
-  if (last < total) { items.push('...'); items.push(total); }
-  return items;
-}
-
-function createPgBtn(n) {
-  const btn = document.createElement('button');
-  btn.className = `pg-btn${n === state.page ? ' on' : ''}`;
-  btn.textContent = n;
-  btn.addEventListener('click', () => { state.page = n; loadLibrary(); });
-  return btn;
 }
 
 /* ---------- edit modal ---------- */
@@ -346,16 +292,19 @@ function closeConfirm() {
 /* ---------- navigation ---------- */
 async function navigateToSong(songId) {
   try {
-    const list = await _fetchAllRaw();
-    const idx = list.findIndex((a) => a.id === songId);
-    if (idx < 0) return;
-    const page = Math.floor(idx / state.pageSize) + 1;
-    state.page = page;
-    state.currentTab = 'lib';
-    $$('.tab').forEach((t) => {
-      t.classList.toggle('on', t.dataset.tab === 'lib');
-    });
-    await loadLibrary();
+    if (state.currentTab !== 'lib') {
+      state.currentTab = 'lib';
+      $$('.tab').forEach((t) => {
+        t.classList.toggle('on', t.dataset.tab === 'lib');
+      });
+      await loadLibrary();
+    }
+    const row = document.querySelector(`#tbody .song-row[data-id="${songId}"]`);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('highlight');
+      setTimeout(() => row.classList.remove('highlight'), 2000);
+    }
     if (typeof Player !== 'undefined' && Player.highlightCurrent) {
       Player.highlightCurrent();
     }
@@ -689,11 +638,14 @@ function bindEvents() {
     });
   });
 
-  $('#pgSize').addEventListener('change', () => {
-    state.pageSize = parseInt($('#pgSize').value);
-    state.page = 1;
-    loadLibrary();
-  });
+  const pgSizeEl = $('#pgSize');
+  if (pgSizeEl) {
+    pgSizeEl.addEventListener('change', () => {
+      state.pageSize = parseInt(pgSizeEl.value);
+      state.page = 1;
+      loadLibrary();
+    });
+  }
 
   $('#scopeSeg').addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON') {
@@ -715,20 +667,45 @@ function bindEvents() {
     }, 350);
   });
 
-  $$('#thead th.sortable').forEach((th) => {
-    th.addEventListener('click', () => {
-      const field = th.dataset.sort;
+  $('#sortTrigger').addEventListener('click', (e) => {
+    e.stopPropagation();
+    $('#sortMenu').classList.toggle('hidden');
+  });
+
+  $$('#sortMenu .sort-dropdown-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const field = item.dataset.field;
       if (state.sortBy === field) {
         state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
       } else {
         state.sortBy = field;
         state.sortOrder = 'asc';
       }
-      $$('#thead th').forEach((t) => { t.classList.remove('asc', 'desc'); });
-      th.classList.add(state.sortOrder);
+      updateSortUI();
       state.page = 1;
       loadLibrary();
+      $('#sortMenu').classList.add('hidden');
     });
+  });
+
+  document.addEventListener('click', () => {
+    const menu = $('#sortMenu');
+    if (menu) menu.classList.add('hidden');
+  });
+}
+
+function updateSortUI() {
+  const labels = { title: '歌名', artist: '歌手', date: '日期', size: '大小' };
+  const label = labels[state.sortBy] || '歌名';
+  const arrow = state.sortOrder === 'asc' ? '↑' : '↓';
+  $('#sortLabel').textContent = label;
+  $('#sortArrow').textContent = arrow;
+  $$('#sortMenu .sort-dropdown-item').forEach((item) => {
+    const active = item.dataset.field === state.sortBy;
+    item.classList.toggle('active', active);
+    const baseLabel = labels[item.dataset.field] || item.dataset.field;
+    item.textContent = active ? baseLabel + ' ' + arrow : baseLabel;
   });
 }
 
@@ -1274,11 +1251,13 @@ const Batch = {
     this.allItems = [];
     this.allSongsMap.clear();
     this.totalCount = 0;
-    $('#batchBar').classList.remove('hidden');
-    $('#thChk').classList.remove('hidden');
-    $$('#modeSeg button').forEach((b) => {
-      b.classList.toggle('on', b.dataset.mode === 'batch');
-    });
+    $('#batchBar').classList.add('show');
+    const idxLabel = document.querySelector('#thIdx .idx-label');
+    const checkAllBtn = $('#btnCheckAll');
+    if (idxLabel) idxLabel.classList.add('hidden');
+    if (checkAllBtn) checkAllBtn.classList.remove('hidden');
+    const toggleBtn = $('#btnBatchToggle');
+    if (toggleBtn) toggleBtn.classList.add('on');
     this._collectItems();
     this._renderCheckboxes();
     this._updateUI();
@@ -1290,16 +1269,33 @@ const Batch = {
     this.allItems = [];
     this.allSongsMap.clear();
     this.totalCount = 0;
-    $('#batchBar').classList.add('hidden');
-    $('#thChk').classList.add('hidden');
-    $$('.row-check-cell').forEach((cb) => {
-      cb.classList.remove('checked');
-      cb.closest('td')?.remove();
+    $('#batchBar').classList.remove('show');
+    const idxLabel = document.querySelector('#thIdx .idx-label');
+    const checkAllBtn = $('#btnCheckAll');
+    if (idxLabel) idxLabel.classList.remove('hidden');
+    if (checkAllBtn) checkAllBtn.classList.add('hidden');
+    $$('#tbody .song-row').forEach((row) => {
+      const idxTd = row.querySelector('.c-idx');
+      if (!idxTd) return;
+      const id = parseInt(row.dataset.id);
+      const idx = idxTd.dataset.idx || '';
+      idxTd.innerHTML = `<span class="idx">${idx}</span><button class="idx-play" data-action="play" data-id="${id}" title="播放"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></button><span class="play-bars"><span></span><span></span><span></span></span>`;
+      idxTd.querySelector('.idx-play').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (Player.state.currentAudio && Player.state.currentAudio.id === id) {
+          Player.toggle();
+          return;
+        }
+        const songs = await fetchAllSongs();
+        const songIdx = songs.findIndex((s) => s.id === id);
+        if (songIdx >= 0) {
+          Player.setPlaylist(songs, songIdx);
+        }
+      });
     });
     this._updateCheckAllBtn(0, 0);
-    $$('#modeSeg button').forEach((b) => {
-      b.classList.toggle('on', b.dataset.mode === 'play');
-    });
+    const toggleBtn = $('#btnBatchToggle');
+    if (toggleBtn) toggleBtn.classList.remove('on');
   },
 
   toggleItem(id) {
@@ -1385,17 +1381,19 @@ const Batch = {
   _renderCheckboxes() {
     const rows = $$('#tbody .song-row');
     rows.forEach((row) => {
-      const existing = row.querySelector('.c-chk-cell');
-      if (existing) return;
-      const td = document.createElement('td');
-      td.className = 'c-chk-cell';
+      const idxTd = row.querySelector('.c-idx');
+      if (!idxTd) return;
+      if (idxTd.querySelector('.row-check-cell')) return;
       const id = parseInt(row.dataset.id);
       const checked = this.selected.has(id);
-      td.innerHTML = `<button class="row-check-cell${checked ? ' checked' : ''}" data-id="${id}">
+      if (!idxTd.dataset.idx) {
+        const idxSpan = idxTd.querySelector('.idx');
+        if (idxSpan) idxTd.dataset.idx = idxSpan.textContent;
+      }
+      idxTd.innerHTML = `<button class="row-check-cell${checked ? ' checked' : ''}" data-id="${id}">
         <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
       </button>`;
-      row.insertBefore(td, row.firstChild);
-      td.querySelector('.row-check-cell').addEventListener('click', () => {
+      idxTd.querySelector('.row-check-cell').addEventListener('click', () => {
         this.toggleItem(id);
       });
     });
@@ -1413,10 +1411,7 @@ const Batch = {
 
     this._updateCheckAllBtn(pageSelectedCount, pageTotal);
 
-    $('#batchCount').innerHTML = `已选 <b>${count}</b> 首`;
-
-    const hintEl = document.querySelector('.batch-hint');
-    if (hintEl) hintEl.textContent = this._getSearchHint();
+    $('#batchSelCount').textContent = count;
 
     const barBtn = $('#btnBatchCheckAll');
     if (count === 0) barBtn.dataset.state = 'none';
@@ -1424,8 +1419,6 @@ const Batch = {
     else barBtn.dataset.state = 'some';
 
     const hasSelection = count > 0;
-    $('#btnBatchDlSong').disabled = !hasSelection;
-    $('#btnBatchDlLyric').disabled = !hasSelection;
     $('#btnBatchSearchLyric').disabled = !hasSelection;
     $('#btnBatchDelete').disabled = !hasSelection;
   },
@@ -1778,25 +1771,22 @@ function closeBatchResult() {
 }
 
 function bindBatchEvents() {
-  $$('#modeSeg button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mode = btn.dataset.mode;
-      $$('#modeSeg button').forEach((b) => b.classList.remove('on'));
-      btn.classList.add('on');
-      if (mode === 'batch') {
-        Batch.enter();
-      } else {
+  const toggleBtn = $('#btnBatchToggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      if (Batch.active) {
         Batch.exit();
+      } else {
+        Batch.enter();
       }
     });
-  });
+  }
 
   $('#btnBatchCheckAll').addEventListener('click', () => Batch.toggleAll());
   $('#btnCheckAll').addEventListener('click', () => Batch.togglePageAll());
 
-  $('#btnBatchDlSong').addEventListener('click', batchDownloadSongs);
-  $('#btnBatchDlLyric').addEventListener('click', batchDownloadLyrics);
   $('#btnBatchDelete').addEventListener('click', batchDeleteSongs);
+  $('#btnBatchCancel').addEventListener('click', () => Batch.exit());
 
   $('#btnBatchSearchLyric').addEventListener('click', () => {
     const items = Batch.getSelectedItems();

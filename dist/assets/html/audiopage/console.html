@@ -53,24 +53,6 @@
   </header>
 
   <main class="lib-main">
-    <div class="toolbar">
-      <div class="tabs">
-        <button class="tab on" data-tab="lib">曲库 <span class="cnt" id="cntLib">0</span></button>
-        <button class="tab" data-tab="bin">回收站 <span class="cnt" id="cntBin">0</span></button>
-      </div>
-      <div class="mode-seg" id="modeSeg">
-        <button class="on" data-mode="play">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          播放
-        </button>
-        <button data-mode="batch">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          批量
-        </button>
-      </div>
-      <div class="result-info" id="resultInfo"></div>
-    </div>
-
     <div class="stats-strip">
       <div class="stat"><div class="v"><span id="stCount">0</span><small>首</small></div><div class="k">歌曲总数</div></div>
       <div class="stat"><div class="v"><span id="stSize">0</span><small>GB</small></div><div class="k">占用空间</div></div>
@@ -78,33 +60,53 @@
       <div class="stat"><div class="v"><span id="stBin">0</span><small>首</small></div><div class="k">回收站</div></div>
     </div>
 
-    <div class="batch-bar hidden" id="batchBar">
-      <div class="batch-left">
-        <button class="batch-check-btn" id="btnBatchCheckAll" data-state="none" title="全选所有歌曲">
-          <svg class="ic ic-check-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
-          <svg class="ic ic-check-some" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
-          <svg class="ic ic-check-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 11 11 13 15 9"/></svg>
+    <div class="tabs">
+      <button class="tab on" data-tab="lib">曲库 <span class="cnt" id="cntLib">0</span></button>
+      <button class="tab" data-tab="bin">回收站 <span class="cnt" id="cntBin">0</span></button>
+    </div>
+
+    <div class="lib-toolbar">
+      <div class="lib-toolbar-left">
+        <div class="sort-dropdown" id="sortDropdown">
+          <button class="sort-dropdown-trigger" id="sortTrigger">
+            <span id="sortLabel">歌名</span> <span class="sort-arrow" id="sortArrow">↑</span>
+            <svg class="sort-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="sort-dropdown-menu hidden" id="sortMenu">
+            <div class="sort-dropdown-item active" data-field="title">歌曲名</div>
+            <div class="sort-dropdown-item" data-field="artist">歌手</div>
+            <div class="sort-dropdown-item" data-field="date">日期</div>
+            <div class="sort-dropdown-item" data-field="size">大小</div>
+          </div>
+        </div>
+        <div class="result-info" id="resultInfo"></div>
+      </div>
+      <div class="lib-toolbar-right">
+        <button class="btn sm" id="btnBatchToggle">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          批量
         </button>
-        <span class="batch-count" id="batchCount">已选 <b>0</b> 首</span>
-        <span class="batch-hint">全选所有</span>
+      </div>
+    </div>
+
+    <div class="batch-bar" id="batchBar">
+      <div class="batch-left">
+        <button class="btn sm" id="btnBatchCheckAll" data-state="none" title="全选所有歌曲">
+          <span class="check-icons"><svg class="ic ic-check-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/></svg><svg class="ic ic-check-some" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg><svg class="ic ic-check-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 11 11 13 15 9"/></svg></span>
+          全选
+        </button>
+        <span class="batch-count" id="batchCount">已选 <b id="batchSelCount">0</b> 首</span>
       </div>
       <div class="batch-actions">
-        <button class="btn btn-outline sm" id="btnBatchDlSong">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          下载歌曲
-        </button>
-        <button class="btn btn-outline sm" id="btnBatchDlLyric">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          下载歌词
-        </button>
         <button class="btn btn-outline sm" id="btnBatchSearchLyric">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8.5 11h5M11 8.5v5"/></svg>
           搜索歌词
         </button>
-        <button class="btn danger sm" id="btnBatchDelete">
+        <button class="btn btn-outline sm" id="btnBatchDelete">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M16 6v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
           删除
         </button>
+        <button class="btn sm" id="btnBatchCancel">取消</button>
       </div>
     </div>
 
@@ -113,21 +115,19 @@
         <table>
           <thead id="thead">
             <tr>
-              <th class="c-chk hidden" id="thChk">
-                <button class="th-check-btn" id="btnCheckAll" data-state="none" title="全选本页歌曲">
+              <th class="c-idx" id="thIdx">
+                <span class="idx-label">#</span>
+                <button class="th-check-btn hidden" id="btnCheckAll" data-state="none" title="全选本页歌曲">
                   <svg class="ic ic-check-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
                   <svg class="ic ic-check-some" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>
                   <svg class="ic ic-check-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 11 11 13 15 9"/></svg>
                 </button>
               </th>
-              <th class="c-idx">#</th>
-              <th data-sort="title" class="sortable">歌曲名<span class="arr"></span></th>
-              <th data-sort="artist" class="sortable">歌手<span class="arr"></span></th>
+              <th>歌名</th>
+              <th>歌手</th>
               <th class="h-album">专辑</th>
               <th class="h-fmt">格式</th>
               <th class="h-size">大小</th>
-              <th class="h-fname">文件名</th>
-              <th class="h-md5">MD5</th>
               <th style="text-align:center">操作</th>
             </tr>
           </thead>
@@ -141,13 +141,6 @@
           <button class="pg-locate" id="plLocate" title="定位到当前播放歌曲">
             <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="8" stroke-dasharray="9 3.57" transform="rotate(13 12 12)"/></svg>
           </button>
-          <div class="pg-nums" id="pgNums"></div>
-        </div>
-        <div class="pg-right">
-          <span class="pg-size-label">每页</span>
-          <select class="pg-size" id="pgSize"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select>
-          <span class="pg-size-label">条</span>
-          <span class="pg-jump">跳至 <input id="pgJump" type="number" min="1" class="pg-jump-input"> 页</span>
         </div>
       </div>
     </div>

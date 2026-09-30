@@ -481,6 +481,7 @@ function toggleBatchMode() {
       $('#videoBinBatchBar').classList.add('show');
       $('#videoContent').classList.add('batch-mode');
       $$('.video-check').forEach((el) => el.style.opacity = '1');
+      $('#btnBinBatchCheckAll').dataset.state = 'none';
     } else {
       exitBinBatchMode();
     }
@@ -491,6 +492,7 @@ function toggleBatchMode() {
       $('#videoBatchBar').classList.add('show');
       $('#videoContent').classList.add('batch-mode');
       $$('.video-check').forEach((el) => el.style.opacity = '1');
+      $('#btnBatchCheckAll').dataset.state = 'none';
     } else {
       exitBatchMode();
     }
@@ -562,10 +564,22 @@ function toggleSelectAll() {
 
 function updateBatchCount() {
   $('#batchSelCount').textContent = videoState.selected.size;
+  const list = videoState.filtered;
+  const btn = $('#btnBatchCheckAll');
+  if (!btn) return;
+  if (videoState.selected.size === 0) btn.dataset.state = 'none';
+  else if (videoState.selected.size === list.length) btn.dataset.state = 'all';
+  else btn.dataset.state = 'some';
 }
 
 function updateBinBatchCount() {
   $('#binBatchSelCount').textContent = videoState.selected.size;
+  const list = videoState.binVideos;
+  const btn = $('#btnBinBatchCheckAll');
+  if (!btn) return;
+  if (videoState.selected.size === 0) btn.dataset.state = 'none';
+  else if (videoState.selected.size === list.length) btn.dataset.state = 'all';
+  else btn.dataset.state = 'some';
 }
 
 function batchDelete() {

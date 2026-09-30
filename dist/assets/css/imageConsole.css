@@ -69,6 +69,16 @@ body:has(#screenImage)::before{background:radial-gradient(900px 520px at 6% -8%,
 .img-batch-count{font-size:13px;color:var(--ink2)}
 .img-batch-count b{color:var(--green)}
 .img-batch-actions{display:flex;gap:10px}
+.check-icons{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none}
+.check-icons .ic{position:absolute;transition:opacity .2s,transform .2s}
+.check-icons .ic-check-some,.check-icons .ic-check-all{opacity:0;transform:scale(.5)}
+#btnBatchCheckAll[data-state="some"] .check-icons .ic-check-none,#btnBinBatchCheckAll[data-state="some"] .check-icons .ic-check-none{opacity:0;transform:scale(.5)}
+#btnBatchCheckAll[data-state="some"] .check-icons .ic-check-some,#btnBinBatchCheckAll[data-state="some"] .check-icons .ic-check-some{opacity:1;transform:scale(1)}
+#btnBatchCheckAll[data-state="some"] .check-icons .ic-check-all,#btnBinBatchCheckAll[data-state="some"] .check-icons .ic-check-all{opacity:0;transform:scale(.5)}
+#btnBatchCheckAll[data-state="all"] .check-icons .ic-check-none,#btnBinBatchCheckAll[data-state="all"] .check-icons .ic-check-none{opacity:0;transform:scale(.5)}
+#btnBatchCheckAll[data-state="all"] .check-icons .ic-check-some,#btnBinBatchCheckAll[data-state="all"] .check-icons .ic-check-some{opacity:0;transform:scale(.5)}
+#btnBatchCheckAll[data-state="all"] .check-icons .ic-check-all,#btnBinBatchCheckAll[data-state="all"] .check-icons .ic-check-all{opacity:1;transform:scale(1)}
+#btnBatchCheckAll[data-state="some"],#btnBatchCheckAll[data-state="all"],#btnBinBatchCheckAll[data-state="some"],#btnBinBatchCheckAll[data-state="all"]{color:var(--green)}
 
 /* lightbox */
 .lightbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
