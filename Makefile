@@ -1,5 +1,3 @@
-.PHONY: gen gen-type gen-server gen-handler gen-logic run build unpack-bin-tools
-
 gen: gen-type gen-server gen-handler gen-logic
 
 gen-type:
@@ -32,3 +30,6 @@ build: unpack-bin-tools
 	go run github.com/akavel/rsrc@latest -ico assets/icon.ico -o assets/rsrc.syso
 	go build -ldflags="-H windowsgui -s -w" -o Rivus.exe
 	@rm -f assets/rsrc.syso
+
+package: build
+	iscc Rivus.iss
